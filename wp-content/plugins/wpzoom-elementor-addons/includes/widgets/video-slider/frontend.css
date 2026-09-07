@@ -1,0 +1,708 @@
+/* Video Slider Widget - Swiper Implementation */
+
+.wpz-video-slider-wrapper {
+	position: relative;
+	width: 100%;
+	height: 100vh; /* Default height, can be overridden by custom height control */
+	overflow: hidden;
+    background: #000;
+}
+
+.wpz-video-slider-wrapper .swiper-wrapper {
+	height: 100%;
+}
+
+.wpz-video-slider-wrapper .swiper-slide {
+	position: relative;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	height: 100%;
+	overflow: hidden;
+	/* Safari fix: Force hardware acceleration and proper rendering */
+	-webkit-transform: translateZ(0);
+	transform: translateZ(0);
+	-webkit-backface-visibility: hidden;
+	backface-visibility: hidden;
+}
+
+/* Slide backgrounds */
+.wpz-slide-bg {
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	background-size: cover;
+	background-position: center;
+	background-repeat: no-repeat;
+	z-index: 1;
+	/* Safari fix: Ensure background stays at bottom layer */
+	-webkit-transform: translateZ(0);
+	transform: translateZ(0);
+}
+
+/* Video backgrounds */
+.wpz-video-bg {
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	z-index: 1;
+	overflow: hidden;
+	/* Safari fix: Ensure video background stays at bottom layer */
+	-webkit-transform: translateZ(0);
+	transform: translateZ(0);
+}
+
+/* Video Background Controls */
+.wpz-background-video-buttons-wrapper {
+	position: absolute;
+	bottom: 20px;
+	right: 20px;
+	z-index: 102;
+	display: flex;
+	gap: 5px;
+	pointer-events: auto;
+
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    touch-action: none;
+    -webkit-touch-callout: none;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.wpz-background-video-buttons-wrapper a {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 40px;
+	height: 40px;
+	color: white;
+	border-radius: 50%;
+	text-decoration: none;
+	transition: all 0.3s ease;
+    opacity: .6;
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    touch-action: none;
+    -webkit-touch-callout: none;
+    -webkit-tap-highlight-color: transparent;
+    pointer-events: auto;
+}
+
+.wpz-background-video-buttons-wrapper a:hover {
+	/*background: rgba(0, 0, 0, 0.9);*/
+	color: white;
+	text-decoration: none;
+	transform: scale(1.1);
+    opacity: .9;
+}
+
+.wpz-background-video-buttons-wrapper a svg {
+	width: 26px;
+	height: 26px;
+	fill: currentColor;
+}
+
+.wpz-background-video-buttons-wrapper .screen-reader-text {
+	position: absolute !important;
+	width: 1px;
+	height: 1px;
+	padding: 0;
+	margin: -1px;
+	overflow: hidden;
+	clip: rect(0, 0, 0, 0);
+	white-space: nowrap;
+	border: 0;
+}
+
+.wpz-background-video-buttons-wrapper .display-none {
+	display: none !important;
+}
+
+.wpz-video-bg video,
+.wpz-video-bg iframe {
+	/* JavaScript handles all positioning and sizing dynamically */
+	background: #000;
+	display: block;
+}
+
+/* Video fallback image - hidden by default, shown only when video fails */
+.wpz-video-fallback {
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+	z-index: 0;
+	opacity: 0;
+	transition: opacity 0.3s ease;
+}
+
+/* Show fallback when video fails to load */
+.wpz-slide-item.video-failed .wpz-video-fallback {
+	opacity: 1;
+	z-index: 1;
+}
+
+/* Hide video container when it fails */
+.wpz-slide-item.video-failed .wpz-video-bg {
+	opacity: 0;
+}
+
+/* Slide item with proper flexbox setup for content positioning */
+.wpz-slide-item {
+	position: relative;
+	display: flex;
+	align-items: center; /* Can be overridden by Elementor control */
+	justify-content: center; /* Can be overridden by Elementor control */
+	width: 100%;
+	height: 100%;
+	z-index: 1;
+	/* Safari fix: Force hardware acceleration and create stacking context */
+	-webkit-transform: translateZ(0);
+	transform: translateZ(0);
+	-webkit-backface-visibility: hidden;
+	backface-visibility: hidden;
+}
+
+/* Content overlay */
+.wpz-slide-inner {
+	position: relative;
+	display: flex;
+	align-items: inherit; /* Inherit from parent slide item */
+	justify-content: inherit; /* Inherit from parent slide item */
+	width: 100%;
+	height: 100%;
+	z-index: 100;
+	pointer-events: none; /* Allow clicks to pass through to children */
+	/* Safari fix: Ensure content stays on top */
+	-webkit-transform: translateZ(0);
+	transform: translateZ(0);
+}
+
+.wpz-slide-content {
+	position: relative;
+	text-align: center; /* Can be overridden by Elementor control */
+	color: white;
+	max-width: 70%; /* Can be overridden by Elementor control */
+	z-index: 101;
+	pointer-events: auto; /* Re-enable clicks for content */
+	/* Safari fix: Force content to stay visible */
+	-webkit-transform: translateZ(0);
+	transform: translateZ(0);
+}
+
+/* Content element spacing - applies to all direct children */
+.wpz-slide-content > * {
+	margin-bottom: 20px;
+}
+
+.wpz-slide-content > *:last-child {
+	margin-bottom: 0;
+}
+
+.wpz-slide-title {
+	font-size: 50px;
+	font-weight: 600;
+	margin-bottom: 0; /* Controlled by parent spacing */
+	line-height: 1.2;
+    color: #fff;
+}
+
+.wpz-slide-title-link {
+	color: inherit;
+	text-decoration: none !important;
+	transition: all 0.3s ease;
+}
+
+.wpz-slide-title-link:hover {
+	color: inherit;
+	text-decoration: none;
+	opacity: 0.8;
+}
+
+.wpz-slide-title-link .wpz-slide-title {
+	margin-bottom: 0; /* Remove margin when title is inside a link */
+	transition: all 0.3s ease;
+}
+
+.wpz-slide-title-link:hover .wpz-slide-title {
+	transform: translateY(-2px);
+}
+
+
+
+.wpz-slide-subtitle {
+	font-size: 18px;
+	margin-bottom: 0; /* Controlled by parent spacing */
+	line-height: 1.5;
+}
+
+.wpz-slide-subtitle p {
+	margin-bottom: 10px;
+}
+
+.wpz-slide-subtitle p:last-child {
+	margin-bottom: 0;
+}
+
+.wpz-slide-subtitle ul,
+.wpz-slide-subtitle ol {
+	text-align: left;
+	margin: 10px 0;
+	padding-left: 20px;
+}
+
+.wpz-slide-subtitle li {
+	margin-bottom: 5px;
+}
+
+.wpz-slide-subtitle a {
+	color: inherit;
+	text-decoration: underline;
+	transition: opacity 0.3s ease;
+}
+
+.wpz-slide-subtitle a:hover {
+	opacity: 0.8;
+}
+
+/* Actions */
+.wpz-slide-actions {
+	position: relative;
+	display: flex;
+	gap: 20px;
+	align-items: center;
+	justify-content: center;
+	flex-wrap: wrap;
+    flex-direction: column;
+	z-index: 102;
+	/* Safari fix: Ensure actions stay on top */
+	-webkit-transform: translateZ(0);
+	transform: translateZ(0);
+}
+
+.wpz-slide-button-wrapper,
+.wpz-slide-lightbox-wrapper {
+	position: relative;
+	display: flex;
+	justify-content: center; /* Can be overridden by Elementor control */
+	width: 100%;
+	touch-action: none;
+	-webkit-touch-callout: none;
+	-webkit-tap-highlight-color: transparent;
+	pointer-events: auto;
+	z-index: 103;
+	/* Safari fix: Ensure wrappers stay clickable */
+	-webkit-transform: translateZ(0);
+	transform: translateZ(0);
+}
+
+.wpz-slide-button {
+	position: relative;
+	padding: 15px 30px;
+	background: transparent;
+	border: 2px solid white;
+	color: white;
+	text-decoration: none !important;
+	border-radius: 0;
+	transition: all 0.3s ease;
+	font-weight: 500;
+	cursor: pointer;
+	user-select: none;
+	touch-action: none;
+	-webkit-touch-callout: none;
+	-webkit-tap-highlight-color: transparent;
+	pointer-events: auto;
+	z-index: 104;
+	/* Safari fix: Ensure button stays clickable */
+	-webkit-transform: translateZ(0);
+	transform: translateZ(0);
+}
+
+.wpz-slide-button:hover {
+	background: white;
+	color: #333;
+}
+
+/* Video lightbox trigger */
+.wpz-slide-lightbox-trigger {
+	position: relative;
+	display: inline-flex !important;
+	align-items: center;
+	justify-content: flex-start;
+	gap: 15px;
+	color: white;
+	text-decoration: none;
+	transition: all 0.3s ease !important;
+	cursor: pointer;
+	user-select: none;
+	-webkit-user-select: none;
+	-moz-user-select: none;
+	-ms-user-select: none;
+	touch-action: none;
+	-webkit-touch-callout: none;
+	-webkit-tap-highlight-color: transparent;
+	pointer-events: auto;
+	z-index: 104;
+	/* Safari fix: Ensure lightbox trigger stays clickable */
+	-webkit-transform: translateZ(0);
+	transform: translateZ(0);
+}
+
+.wpz-slide-lightbox-trigger:hover {
+	transform: scale(1.05);
+}
+
+.wpz-lightbox-icon {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 70px;
+	height: 70px;
+	background: rgba(255, 255, 255, 0.1);
+	border: 2px solid white;
+	border-radius: 50%;
+	backdrop-filter: blur(10px);
+	flex-shrink: 0;
+	transition: all 0.3s ease;
+    padding-left: 2px;
+}
+
+.wpz-slide-lightbox-trigger:hover .wpz-lightbox-icon {
+	background: rgba(255, 255, 255, 0.2);
+}
+
+.wpz-slide-lightbox-trigger svg {
+	width: 24px;
+	height: 24px;
+	fill: currentColor !important;
+	color: inherit;
+	pointer-events: none;
+	touch-action: none;
+}
+
+.wpz-slide-lightbox-trigger svg path {
+	fill: currentColor !important;
+}
+
+.wpz-lightbox-text {
+	font-size: 20px;
+	font-weight: 600;
+	letter-spacing: 0.5px;
+	white-space: nowrap;
+	opacity: 0.9;
+	transition: opacity 0.3s ease;
+}
+
+.wpz-slide-lightbox-trigger:hover .wpz-lightbox-text {
+	opacity: 1;
+}
+
+/* Navigation arrows */
+.wpz-video-slider-wrapper .swiper-button-prev,
+.wpz-video-slider-wrapper .swiper-button-next {
+	position: absolute;
+	top: 50%;
+	transform: translateY(-50%);
+	width: 50px; /* Default size, can be overridden by Elementor control */
+	height: 50px; /* Default size, can be overridden by Elementor control */
+	margin-top: 0;
+	border-radius: 50%;
+	color: white;
+	z-index: 999;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	transition: all 0.3s ease;
+	font-size: 20px; /* This will be controlled by Elementor font-size control */
+}
+
+/*.wpz-video-slider-wrapper .swiper-button-prev {
+	left: 30px;
+}
+
+.wpz-video-slider-wrapper .swiper-button-next {
+	right: 30px;
+}*/
+
+.wpz-video-slider-wrapper .swiper-button-prev:hover,
+.wpz-video-slider-wrapper .swiper-button-next:hover {
+	background: rgba(255, 255, 255, 0.2);
+	transform: translateY(-50%) scale(1.1);
+}
+
+.wpz-video-slider-wrapper .swiper-button-prev::after,
+.wpz-video-slider-wrapper .swiper-button-next::after {
+	display: none;
+}
+
+.wpz-video-slider-wrapper .swiper-button-prev svg,
+.wpz-video-slider-wrapper .swiper-button-next svg {
+	width: 1.5em;
+	height: 1.5em;
+	fill: currentColor;
+}
+
+/* Pagination dots */
+.wpz-video-slider-wrapper .swiper-pagination {
+	bottom: 30px;
+	z-index: 999;
+}
+
+.wpz-video-slider-wrapper .swiper-pagination-bullet {
+	background: rgba(255, 255, 255, 0.5);
+	opacity: 1;
+	transition: all 0.3s ease;
+}
+
+.wpz-video-slider-wrapper .swiper-pagination-bullet-active {
+	background: white;
+	transform: scale(1.2);
+}
+
+/* Background overlay */
+.wpz-slide-item::before {
+	content: "";
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	background: rgba(0, 0, 0, 0.5);
+	z-index: 50;
+	display: none; /* Hidden by default, controlled by Elementor toggle */
+	/* Safari fix: Ensure overlay stays in correct layer */
+	-webkit-transform: translateZ(0);
+	transform: translateZ(0);
+}
+
+/* Video lightbox */
+.wpz-lightbox {
+	position: fixed;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	background: rgba(0, 0, 0, 0.9);
+	z-index: 999999;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	opacity: 0;
+	visibility: hidden;
+	transition: all 0.3s ease;
+}
+
+.wpz-lightbox.active {
+	opacity: 1;
+	visibility: visible;
+}
+
+.wpz-lightbox-overlay {
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	background: transparent;
+	cursor: pointer;
+	z-index: 1;
+}
+
+.wpz-lightbox-container {
+	position: relative;
+	width: 90%;
+	max-width: 1600px;
+	aspect-ratio: 16/9;
+	z-index: 2;
+}
+
+.wpz-lightbox-content {
+	width: 100%;
+	height: 100%;
+	overflow: visible;
+}
+
+.wpz-lightbox-video {
+	width: 100%;
+	height: 100%;
+	border: none;
+	background: black;
+}
+
+
+.wpz-lightbox-close {
+	position: fixed;
+	top: 20px;
+	right: 20px;
+	width: 50px;
+	height: 50px;
+ 	border-radius: 50%;
+	color: white;
+	cursor: pointer;
+	align-items: center;
+	justify-content: center;
+	transition: all 0.3s ease;
+	z-index: 500;
+	opacity: 1;
+	visibility: visible;
+    background: none;
+    border: none;
+}
+
+.wpz-lightbox-close:hover {
+	transform: scale(1.1);
+    background: none;
+    border: none;
+}
+
+.wpz-lightbox-close svg {
+	width: 24px;
+	height: 24px;
+	fill: currentColor;
+}
+
+/* Responsive design */
+@media (max-width: 1024px) {
+	.wpz-slide-title {
+		font-size: 36px;
+	}
+
+	.wpz-slide-subtitle {
+		font-size: 16px;
+	}
+
+	.wpz-video-slider-wrapper .swiper-button-prev {
+		left: 20px;
+	}
+
+	.wpz-video-slider-wrapper .swiper-button-next {
+		right: 20px;
+	}
+}
+
+@media (max-width: 767px) {
+	.wpz-slide-title {
+		font-size: 26px;
+		margin-bottom: 15px;
+	}
+
+	.wpz-slide-subtitle {
+		font-size: 16px;
+		margin-bottom: 20px;
+	}
+	
+	.wpz-slide-content {
+		max-width: 90%;
+	}
+
+	.wpz-slide-lightbox-trigger {
+		gap: 15px;
+	}
+
+	.wpz-lightbox-icon {
+		width: 60px;
+		height: 60px;
+	}
+	
+	.wpz-slide-lightbox-trigger svg {
+		width: 20px;
+		height: 20px;
+	}
+
+	.wpz-lightbox-text {
+		font-size: 14px;
+	}
+	
+	.wpz-video-slider-wrapper .swiper-button-prev,
+	.wpz-video-slider-wrapper .swiper-button-next {
+		width: 45px;
+		height: 45px;
+	}
+	
+	.wpz-video-slider-wrapper .swiper-button-prev {
+		left: 15px;
+	}
+	
+	.wpz-video-slider-wrapper .swiper-button-next {
+		right: 15px;
+	}
+
+	.wpz-lightbox-close {
+		top: 15px;
+		right: 15px;
+		width: 45px;
+		height: 45px;
+	}
+
+	.wpz-lightbox-close svg {
+		width: 20px;
+		height: 20px;
+	}
+
+	/* Video Background Controls - Mobile */
+	.wpz-background-video-buttons-wrapper a {
+		width: 36px;
+		height: 36px;
+	}
+
+}
+
+/* Safari-specific fixes */
+@supports (-webkit-appearance: none) {
+	.wpz-slide-item {
+		isolation: isolate;
+	}
+	
+	.wpz-slide-inner,
+	.wpz-slide-content,
+	.wpz-slide-actions,
+	.wpz-slide-button,
+	.wpz-slide-lightbox-trigger {
+		will-change: transform;
+		-webkit-transform: translate3d(0, 0, 0);
+		transform: translate3d(0, 0, 0);
+	}
+	
+	.wpz-slide-item::before {
+		will-change: transform;
+		-webkit-transform: translate3d(0, 0, 0);
+		transform: translate3d(0, 0, 0);
+	}
+}
+
+/* Premium Widget Upgrade Notice Styling */
+.wpzoom-premium-upgrade-notice {
+	margin: 0 !important;
+}
+
+.wpzoom-premium-upgrade-notice a:hover {
+	background: #005a87 !important;
+	transform: translateY(-1px);
+	box-shadow: 0 4px 12px rgba(0, 124, 186, 0.3);
+}
+
+/* Editor-specific premium notice styling */
+.elementor-editor-active .wpzoom-premium-upgrade-notice {
+	border: 2px dashed #dee2e6 !important;
+	background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%) !important;
+}
+
+/* Frontend premium notice styling */
+.wpzoom-premium-frontend-notice {
+	transition: all 0.3s ease;
+}
+
+.wpzoom-premium-frontend-notice:hover {
+	background: #e9ecef !important;
+	transform: translateY(-1px);
+}

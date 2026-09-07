@@ -1,0 +1,32 @@
+# Environment / secrets
+wp-config.php
+.env
+.env.*
+
+# User generated content
+wp-content/uploads/
+
+# Cache / runtime
+wp-content/cache/
+wp-content/litespeed/
+wp-content/wpo-cache/
+wp-content/wflogs/
+wp-content/upgrade/
+wp-content/upgrade-temp-backup/
+wp-content/maintenance/
+
+# Generated assets
+wp-content/fonts/
+wp-content/languages/
+
+# Logs
+error_log
+*.log
+
+# OS / IDE
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+*.swo
