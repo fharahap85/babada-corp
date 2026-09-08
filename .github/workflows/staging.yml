@@ -1,36 +1,31 @@
-name: Deploy Staging
+- name: Deploy to Staging
+  uses: SamKirkland/FTP-Deploy-Action@v4.4.0
+  with:
+    server: ftp.babada.co.id
+    username: ${{ secrets.FTP_STAGING_USERNAME }}
+    password: ${{ secrets.FTP_STAGING_PASSWORD }}
 
-on:
-  push:
-    branches:
-      - develop
+    protocol: ftps
+    port: 21
 
-jobs:
-  deploy:
-    name: Deploy to staging
-    runs-on: ubuntu-latest
+    security: loose
+    timeout: 120000
 
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+    local-dir: ./
+    server-dir: ./
 
-      - name: Deploy via FTPS
-        uses: SamKirkland/FTP-Deploy-Action@v4.3.6
-        with:
-          server: ${{ secrets.FTP_HOST }}
-          username: ${{ secrets.FTP_USERNAME }}
-          password: ${{ secrets.FTP_PASSWORD }}
-          protocol: ftps
-          port: 21
-          security: loose
-          server-dir: ./
-          exclude: |
-            **/.git*
-            **/.git*/**
-            **/wp-config.php
-            **/wp-content/uploads/**
-            **/wp-content/cache/**
-            **/wp-content/litespeed/**
-            **/wp-content/wflogs/**
-            **/wp-content/upgrade/**
-            **/wp-content/upgrade-temp-backup/**
+    state-name: .ftp-deploy-sync-state.json
+
+    exclude: |
+      **/.git*
+      **/.git*/**
+      **/node_modules/**
+      wp-config.php
+      wp-content/uploads/**
+      wp-content/cache/**
+      wp-content/litespeed/**
+      wp-content/wflogs/**
+      wp-content/languages/**
+      wp-content/upgrade/**
+      wp-content/upgrade-temp-backup/**
+      wp-content/wpo-cache/**
