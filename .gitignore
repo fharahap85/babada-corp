@@ -1,3 +1,11 @@
+# WordPress core (managed on server, not in git)
+wp-admin/
+wp-includes/
+
+# Plugins & themes (managed on server, not in git)
+wp-content/plugins/
+wp-content/themes/
+
 # Environment / secrets
 wp-config.php
 .env
