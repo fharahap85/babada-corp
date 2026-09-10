@@ -1,15 +1,42 @@
-name: No Deploy
+name: Deploy Staging
 
 on:
   push:
     branches:
       - develop
+    paths:
+      - 'wp-content/themes/babada-child/**'
+      - '.github/workflows/staging.yml'
 
   workflow_dispatch:
 
 jobs:
-  noop:
-    name: Git only — deploy via cPanel
+  deploy-theme:
+    name: Deploy Babada Child Theme
     runs-on: ubuntu-latest
+
     steps:
-      - run: echo "Staging is deployed manually via cPanel File Manager"
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Deploy Babada Child Theme
+        uses: SamKirkland/FTP-Deploy-Action@v4.4.0
+        with:
+          server: ${{ secrets.FTP_HOST }}
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+
+          protocol: ftps
+          port: 21
+          security: loose
+          timeout: 120000
+
+          local-dir: ./wp-content/themes/babada-child/
+          server-dir: ./wp-content/themes/babada-child/
+
+          state-name: .ftp-deploy-theme-state.json
+
+          exclude: |
+            **/.git*
+            **/.git*/**
+            **/node_modules/**
