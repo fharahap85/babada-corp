@@ -1,1 +1,51 @@
-/* Babada custom styles */
+:root {
+  --babada-primary: #1d3557;
+  --babada-secondary: #457b9d;
+  --babada-accent: #e76f51;
+
+  --babada-dark: #17202a;
+  --babada-text: #374151;
+  --babada-muted: #6b7280;
+
+  --babada-bg: #ffffff;
+  --babada-bg-soft: #f7f8fa;
+
+  --babada-radius-sm: 8px;
+  --babada-radius-md: 16px;
+  --babada-radius-lg: 24px;
+
+  --babada-container: 1200px;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  color: var(--babada-text);
+  background: var(--babada-bg);
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  color: var(--babada-dark);
+  line-height: 1.2;
+}
+
+a {
+  transition: opacity 0.2s ease, color 0.2s ease;
+}
+
+img {
+  max-width: 100%;
+  height: auto;
+}
+
+/* TEST: outline merah — hapus setelah verifikasi */
+body {
+  outline: 4px solid red;
+}
