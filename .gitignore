@@ -2,9 +2,15 @@
 wp-admin/
 wp-includes/
 
-# Plugins & themes (managed on server, not in git)
-wp-content/plugins/
-wp-content/themes/
+# Plugins (managed on server, not in git)
+wp-content/plugins/*
+!wp-content/plugins/babada-custom/
+!wp-content/plugins/babada-custom/**
+
+# Themes (managed on server, not in git)
+wp-content/themes/*
+!wp-content/themes/babada-child/
+!wp-content/themes/babada-child/**
 
 # Environment / secrets
 wp-config.php
