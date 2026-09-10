@@ -1,4 +1,4 @@
-name: Deploy Staging
+name: No Deploy
 
 on:
   push:
@@ -8,42 +8,8 @@ on:
   workflow_dispatch:
 
 jobs:
-  deploy:
-    name: Deploy to staging
+  noop:
+    name: Git only — deploy via cPanel
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Deploy via FTPS
-        uses: SamKirkland/FTP-Deploy-Action@v4.4.0
-        with:
-          server: ${{ secrets.FTP_HOST }}
-          username: ${{ secrets.FTP_USERNAME }}
-          password: ${{ secrets.FTP_PASSWORD }}
-
-          protocol: ftps
-          port: 21
-          security: loose
-          timeout: 120000
-
-          local-dir: ./
-          server-dir: ./
-
-          state-name: .ftp-deploy-sync-state.json
-
-          exclude: |
-            **/.git*
-            **/.git*/**
-            **/.github/**
-            **/node_modules/**
-            **/wp-config.php
-            **/wp-content/uploads/**
-            **/wp-content/cache/**
-            **/wp-content/litespeed/**
-            **/wp-content/wflogs/**
-            **/wp-content/languages/**
-            **/wp-content/upgrade/**
-            **/wp-content/upgrade-temp-backup/**
-            **/wp-content/wpo-cache/**
+      - run: echo "Staging is deployed manually via cPanel File Manager"
