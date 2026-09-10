@@ -1,37 +1,13 @@
 <?php
+// ponytail: minimal child theme — enqueue assets later when needed
 
 if (!defined('ABSPATH')) {
     exit;
 }
 
-function babada_child_enqueue_assets()
+function babada_child_setup()
 {
-    wp_enqueue_style(
-        'astra-parent-style',
-        get_template_directory_uri() . '/style.css'
-    );
-
-    wp_enqueue_style(
-        'babada-child-style',
-        get_stylesheet_uri(),
-        ['astra-parent-style'],
-        wp_get_theme()->get('Version')
-    );
-
-    wp_enqueue_style(
-        'babada-custom-style',
-        get_stylesheet_directory_uri() . '/assets/css/custom.css',
-        ['babada-child-style'],
-        '1.0.0'
-    );
-
-    wp_enqueue_script(
-        'babada-custom-script',
-        get_stylesheet_directory_uri() . '/assets/js/custom.js',
-        [],
-        '1.0.0',
-        true
-    );
+    add_theme_support('title-tag');
 }
 
-add_action('wp_enqueue_scripts', 'babada_child_enqueue_assets');
+add_action('after_setup_theme', 'babada_child_setup');
