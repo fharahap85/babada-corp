@@ -2,12 +2,13 @@
 wp-admin/
 wp-includes/
 
-# Plugins & themes (managed on server, not in git)
-wp-content/plugins/*
-!wp-content/plugins/babada-custom/
-!wp-content/plugins/babada-custom/**
+# Third-party plugins
+wp-content/plugins/
 
+# Third-party themes
 wp-content/themes/*
+
+# Track Babada custom child theme
 !wp-content/themes/babada-child/
 !wp-content/themes/babada-child/**
 
