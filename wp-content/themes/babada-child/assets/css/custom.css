@@ -44,25 +44,3 @@ img {
   max-width: 100%;
   height: auto;
 }
-
-/* TEST: outline merah — hapus setelah verifikasi */
-body {
-  outline: 4px solid red;
-  outline-offset: -4px;
-}
-
-/* TEST: badge staging — hapus setelah verifikasi */
-body::after {
-  content: "STAGING • deploy 2026-09-25";
-  position: fixed;
-  right: 16px;
-  bottom: 16px;
-  z-index: 99999;
-  padding: 8px 14px;
-  border-radius: 999px;
-  background: #e76f51;
-  color: #fff;
-  font: 600 13px/1 system-ui, sans-serif;
-  letter-spacing: 0.04em;
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
-}
