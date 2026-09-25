@@ -48,7 +48,7 @@ git ls-files | grep -c '^wp-includes'
 git log --format='%h %ad %s' --date=short
 
 # 5. Edit DOKUMENTASI.md sesuai tabel trigger di §1
-# 6. Commit doc bersama (atau terpisah dari) perubahannya
+# 6. Commit di branch, lalu buka PR (lihat §5)
 ```
 
 **Commit message:** `docs: update DOKUMENTASI.md (<hal yang berubah>)`
@@ -80,10 +80,54 @@ git status --short   # pastikan DOKUMENTASI.md ikut ter-stage
 - [ ] Jumlah file & riwayat git diperbarui
 - [ ] Tidak ada secret yang bocor
 - [ ] Commit doc sudah dibuat
+- [ ] Perubahan lewat PR → merge ke `main` (§5), tidak push langsung ke `main`
 
 ---
 
-## 5. Struktur file dokumen
+## 5. Alur rilis — WAJIB lewat PR
+
+Jangan pernah push langsung ke `main`. Setiap perubahan (kode maupun doc) harus melewati **branch → PR → merge**.
+
+```bash
+# 1. Selalu mulai dari main terbaru
+git fetch origin
+git checkout main && git pull
+git checkout -b <tipe>/<slug>          # tipe: docs/ fix/ feat/ chore/ update/
+
+# 2. Kerjakan perubahan + update DOKUMENTASI.md (§1–§4)
+git status --short
+git diff --stat
+
+# 3. Commit (pesan sesuai §2)
+git add -A
+git commit -m "docs: update DOKUMENTASI.md (<hal yang berubah>)"
+
+# 4. Push branch & buka PR
+git push -u origin <tipe>/<slug>
+gh pr create --fill                   # base: main, compare: <tipe>/<slug>
+
+# 5. Review PR (cek §4 checklist di diff)
+gh pr checks
+gh pr diff
+
+# 6. Merge ke main, hapus branch
+gh pr merge --squash --delete-branch
+
+# 7. Selesaikan lokal
+git checkout main && git pull
+git status -sb                        # harus bersih, main == origin/main
+```
+
+Aturan PR:
+- **Base selalu `main`**, compare = branch kerja. `main` tidak pernah di-push langsung.
+- **Squash merge** — satu perubahan = satu commit di `main` (riwayat tetap rapi).
+- Satu PR = satu topik. Perubahan doc yang terpisah dari perubahan kode boleh jadi PR terpisah.
+- PR wajib lolos §4 (verifikasi akhir) sebelum di-merge.
+- Setelah merge: tarik `main` lokal, cek `git status -sb` bersih, lalu lanjut kerja dari `main` baru.
+
+---
+
+## 6. Struktur file dokumen
 
 ```
 README.md          → ringkasan 1 baris (sudah cukup)

@@ -129,6 +129,8 @@ Ada juga `wp-content/plugins/justshoppe-features.zip` — paket zip yang di-comm
 
 ## 5. Riwayat Git
 
+Baseline (impor eksisting production):
+
 ```
 973197c5 2026-09-07 chore: add WordPress core          ← import WP core + wp-content
 6f5999c5 2026-09-07 chore: initial production baseline  ← baseline production
@@ -136,7 +138,10 @@ b3572960 2026-08-24 Add cPanel deployment               ← .cpanel.yml
 df0ac28e 2026-08-24 Update README.md
 87312c94 2026-08-24 first commit
 ```
-Semua commit bersifat *baseline* (impor eksisting production), belum ada commit perubahan kode custom.
+
+- Author: `Abdullah Fikri Harahap <fharahap85@gmail.com>` (set lokal: `git config user.name/user.email`).
+- **Riwayat setelah baseline** (perubahan kode/doc) selalu masuk lewat **PR → merge ke `main`** — lihat [`WORKFLOW.md`](WORKFLOW.md) §5.
+- Daftar lengkap terbaru: `git log --oneline -15`.
 
 ---
 
@@ -162,7 +167,7 @@ Dibuat Yoast SEO v28.1 untuk dikonsumsi LLM. Isinya daftar URL resmi:
 ## 8. Cara Kerja / Alur
 
 1. Repo ini = **cetak biru production** (bukan proyek dev dengan build step).
-2. Perubahan file (plugin/theme update, tuning `.htaccess`) dilakukan di lokal → commit → push.
+2. Perubahan file (plugin/theme update, tuning `.htaccess`) dilakukan di lokal → commit di **branch** → **PR** → merge ke `main` (aturan lengkap: [`WORKFLOW.md`](WORKFLOW.md) §5).
 3. Deploy ke server via cPanel Git Deployment (`.cpanel.yml`), saat ini hanya menyalin `README.md`.
 4. Konten (posts, uploads, settings) **hidup di database & `wp-content/uploads/`** — tidak ada di repo.
 
