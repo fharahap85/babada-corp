@@ -152,12 +152,13 @@ df0ac28e 2026-08-24 Update README.md
 - **Riwayat setelah baseline** (perubahan kode/doc) selalu masuk lewat **PR → merge ke `main`** — lihat [`WORKFLOW.md`](WORKFLOW.md) §5.
 
 ```
+a08188fb 2026-09-25 update: sinkron repo ke versi server (WP 7.1.2 + Astra 4.13.9 + 11 plugin)  (PR #4)
 26bfc983 2026-09-25 ci: tambah workflow server snapshot (probe/pack)   (PR #3)
 bc8d7545 2026-09-25 docs: sinkron status server staging, CI/CD, known issue  (PR #2)
 9a25419c 2026-09-25 docs: dokumentasi proyek + workflow update via PR  (PR #1)
 ```
 
-- Riwayat paling mutakhir: `git log --oneline -15` (PR ini menyusul sebagai squash commit berikutnya).
+- Daftar di atas sengaja tidak dikejar terus-menerus (tiap PR baru butuh PR doc lagi) — riwayat paling mutakhir selalu: `git log --oneline -15`.
 
 ---
 
