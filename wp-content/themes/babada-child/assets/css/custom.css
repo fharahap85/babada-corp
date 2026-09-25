@@ -48,6 +48,7 @@ img {
 /* TEST: outline merah — hapus setelah verifikasi */
 body {
   outline: 4px solid red;
+  outline-offset: -4px;
 }
 
 /* TEST: badge staging — hapus setelah verifikasi */
