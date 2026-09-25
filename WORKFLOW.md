@@ -19,6 +19,7 @@ File ini adalah satu-satunya sumber aturan update. `README.md` tetap ringkas (sa
 | 6 | Ganti isi `robots.txt` atau `llms.txt` | §6 / §7 |
 | 7 | Perubahan **deploy / hosting / domain / PHP version** | §1 & §8 |
 | 8 | Commit baru apa pun | §5 riwayat git |
+| 9 | Perubahan **langsung di server** (update plugin/theme via dashboard, aktivasi child theme, ganti versi PHP) | §9.1 (tabel repo vs server) |
 
 > Deteksi cepat: `git status --short` dan `git diff --stat` sebelum & sesudah perubahan.
 
@@ -46,6 +47,12 @@ git ls-files | grep -c '^wp-includes'
 
 # 4. Riwayat git terbaru (untuk §5)
 git log --format='%h %ad %s' --date=short
+
+# 4b. Bandingkan dgn versi server staging (untuk §9.1)
+for p in elementor wordpress-seo wordfence wp-optimize astra; do
+  echo -n "$p: "
+  curl -s "https://staging.babada.co.id/wp-content/plugins/$p/readme.txt" | grep -i "Stable tag" | tr -d '\r'
+done
 
 # 5. Edit DOKUMENTASI.md sesuai tabel trigger di §1
 # 6. Commit di branch, lalu buka PR (lihat §5)
