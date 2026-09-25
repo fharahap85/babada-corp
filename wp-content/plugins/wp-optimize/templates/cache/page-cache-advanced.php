@@ -5,17 +5,26 @@
 <div class="wpo-fieldgroup cache-options">
 	<div class="wpo-fieldgroup__subgroup">
 		<label for="wpo-show-avatars">
-			<input type="checkbox" value="true" disabled <?php checked(get_option('show_avatars'), 1); ?>>
-			<?php esc_html_e('Show avatars.', 'wp-optimize'); ?>
+			<input type="checkbox" value="true" disabled <?php checked($show_avatars, 1); ?>>
+			<?php esc_html_e('Show avatars (WordPress core setting).', 'wp-optimize'); ?>
 		</label>
-		<span tabindex="0" data-tooltip="<?php esc_attr_e('Disable or enable avatars for users.', 'wp-optimize');?>"><span class="dashicons dashicons-editor-help"></span> </span>
+		<span tabindex="0" class="wpo-tooltip" data-tooltip="<?php esc_attr_e('This option controls the WordPress core avatar display setting.', 'wp-optimize'); ?> <?php esc_attr_e('WP-Optimize does not manage avatars directly.', 'wp-optimize'); ?> <?php esc_attr_e('You can also change this setting in Settings → Discussion.', 'wp-optimize'); ?> <?php esc_attr_e('When disabled, locally hosted gravatars will also be disabled.', 'wp-optimize'); ?>">
+			<span class="dashicons dashicons-editor-help"></span>
+		</span>
+		<p class="description">
+			<?php esc_html_e('This is a WordPress core setting.', 'wp-optimize'); ?>
+			<?php
+				/* translators: %s: Link to WordPress Discussion Settings page */
+				printf(esc_html__('For more avatar options, visit %s.', 'wp-optimize'), '<a href="' . esc_url(admin_url('options-discussion.php')) . '" target="_blank">' . esc_html__('Settings → Discussion', 'wp-optimize') . '</a>');
+			?>
+		</p>
 	</div>
 	<div class="wpo-fieldgroup__subgroup" id="wpo-host-gravatars-locally-container">
 		<label for="wpo-host-gravatars-locally">
 			<input type="checkbox" value="true" disabled>
 			<?php esc_html_e('Host gravatars locally.', 'wp-optimize'); ?>
 		</label>
-		<span tabindex="0" data-tooltip="<?php esc_attr_e('Host gravatars locally to reduce http requests and enhanced privacy.', 'wp-optimize');?>"><span class="dashicons dashicons-editor-help"></span> </span>
+		<span tabindex="0" class="wpo-tooltip" data-tooltip="<?php esc_attr_e('Host gravatars locally to reduce http requests and enhanced privacy.', 'wp-optimize');?>"><span class="dashicons dashicons-editor-help"></span> </span>
 	</div>
 	<p><a href="<?php echo esc_url(WP_Optimize()->premium_version_link); ?>&utm_content=host-gravatars-locally" target="_blank"><?php esc_html_e('Upgrade to WP-Optimize Premium to unlock this feature.', 'wp-optimize'); ?></a></p>
 </div>
@@ -28,7 +37,7 @@
 			<input name="cache_specific_urls_only" id="cache_specific_urls_only" class="cache-settings" type="checkbox" value="true" disabled>
 			<?php esc_html_e('Cache Specific URLs Only', 'wp-optimize'); ?>
 		</label>
-		<span tabindex="0" data-tooltip="<?php esc_attr_e('Enable or disable caching for specific URLs only.', 'wp-optimize');?>"><span class="dashicons dashicons-editor-help"></span> </span>
+		<span tabindex="0" class="wpo-tooltip" data-tooltip="<?php esc_attr_e('Enable or disable caching for specific URLs only.', 'wp-optimize');?>"><span class="dashicons dashicons-editor-help"></span> </span>
 	</div>
 	<p><a href="<?php echo esc_url(WP_Optimize()->premium_version_link); ?>&utm_content=cache_ignore_query_variables" target="_blank"><?php esc_html_e('Upgrade to WP-Optimize Premium to unlock this feature.', 'wp-optimize'); ?></a></p>
 	<p>
@@ -139,8 +148,10 @@
 
 <?php do_action('wpo_page_cache_advanced_settings', $wpo_cache_options); ?>
 
-<input id="wp-optimize-save-cache-advanced-rules" class="button button-primary" type="submit" name="wp-optimize-save-cache-advanced-rules" value="Save changes">
+<div class="wpo-save-btn-container">
+	<input id="wp-optimize-save-cache-advanced-rules" class="button button-primary" type="submit" name="wp-optimize-save-cache-advanced-rules" value="Save changes">
 
-<img class="wpo_spinner" src="<?php echo esc_url(admin_url('images/spinner-2x.gif')); // phpcs:ignore PluginCheck.CodeAnalysis.ImageFunctions.NonEnqueuedImage -- N/A ?>" alt="...">
+	<img class="wpo_spinner" src="<?php echo esc_url(admin_url('images/spinner-2x.gif')); // phpcs:ignore PluginCheck.CodeAnalysis.ImageFunctions.NonEnqueuedImage -- N/A ?>" alt="...">
 
-<span class="save-done dashicons dashicons-yes display-none"></span>
+	<span class="save-done dashicons dashicons-yes display-none"></span>
+</div>

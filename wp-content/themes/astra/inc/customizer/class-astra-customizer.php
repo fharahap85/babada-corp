@@ -108,6 +108,14 @@ if ( ! class_exists( 'Astra_Customizer' ) ) {
 		public static $customizer_footer_configs = array();
 
 		/**
+		 * Option filters detached while the customizer saves settings.
+		 *
+		 * @since 4.13.9
+		 * @var array
+		 */
+		private $detached_option_filters = array();
+
+		/**
 		 * Initiator
 		 */
 		public static function get_instance() {
@@ -202,6 +210,14 @@ if ( ! class_exists( 'Astra_Customizer' ) ) {
 
 			add_action( 'customize_register', array( $this, 'customize_register' ) );
 			add_action( 'customize_register', array( $this, 'customize_register_site_icon' ), 20 );
+			// WP_Customize_Setting snapshots the astra-settings root value when settings are constructed
+			// during customize_register (aggregate_multidimensional) and saves from that snapshot, so on
+			// save requests the option filters must be detached before registration — customize_save is too late.
+			if ( isset( $_POST['action'] ) && 'customize_save' === $_POST['action'] ) { // phpcs:ignore WordPress.Security.NonceVerification.Missing -- Request detection only, core verifies the nonce before saving.
+				add_action( 'customize_register', array( $this, 'detach_option_filters' ), 0 );
+			}
+			add_action( 'customize_save', array( $this, 'detach_option_filters' ), 1 );
+			add_action( 'customize_save_after', array( $this, 'restore_option_filters' ), 999 );
 			add_action( 'customize_save_after', array( $this, 'customize_save' ) );
 			add_action( 'customize_save_after', array( $this, 'delete_cached_partials' ) );
 			add_action( 'wp_head', array( $this, 'preview_styles' ) );
@@ -1186,6 +1202,7 @@ if ( ! class_exists( 'Astra_Customizer' ) ) {
 						'header-builder' => astra_get_pro_url( '/pricing/', 'free-theme', 'customizer', 'header-builder' ),
 						'footer-builder' => astra_get_pro_url( '/pricing/', 'free-theme', 'customizer', 'footer-builder' ),
 						'sidebar'        => astra_get_pro_url( '/pricing/', 'free-theme', 'customizer', 'sidebar' ),
+						'menus'          => astra_get_pro_url( '/pricing/', 'free-theme', 'customizer', 'menus' ),
 						'woocommerce'    => astra_get_pro_url( '/pricing/', 'free-theme', 'customizer', 'woocommerce' ),
 						'blog-single'    => astra_get_pro_url( '/pricing/', 'free-theme', 'customizer', 'blog-single' ),
 						'blog-archive'   => astra_get_pro_url( '/pricing/', 'free-theme', 'customizer', 'blog-archive' ),
@@ -1530,6 +1547,19 @@ if ( ! class_exists( 'Astra_Customizer' ) ) {
 
 			// Customizer Controls.
 			wp_enqueue_style( 'astra-customizer-controls-css', ASTRA_THEME_URI . 'assets/css/minified/customizer-controls' . $css_prefix, null, ASTRA_THEME_VERSION );
+
+			// Sync customizer accent colors with WP admin color scheme.
+			if ( apply_filters( 'astra_customizer_match_admin_color_scheme', true ) ) {
+				$admin_color_css = 'body {
+					--ast-customizer-color-1: var(--wp-admin-theme-color, #0284c7);
+					--ast-customizer-color-2: var(--wp-admin-theme-color, #0ea5e9);
+					--ast-customizer-color-3: var(--wp-admin-theme-color-darker-10, #2271b1);
+					--ast-customizer-primary-color: var(--wp-admin-theme-color, #0284c7);
+					--ast-customizer-alternate-primary-color: var(--wp-admin-theme-color, #0ea5e9);
+					--ast-customizer-active-border-color: var(--wp-admin-theme-color, #0ea5e9);
+				}';
+				wp_add_inline_style( 'astra-customizer-controls-css', $admin_color_css );
+			}
 
 			wp_enqueue_script( 'astra-customizer-style-guide-js', ASTRA_THEME_URI . 'assets/js/' . $dir . '/customizer-style-guide' . $js_prefix, array( 'jquery', 'astra-customizer-controls-toggle-js' ), ASTRA_THEME_VERSION, true );
 			wp_localize_script(
@@ -1955,6 +1985,33 @@ if ( ! class_exists( 'Astra_Customizer' ) ) {
 			);
 
 			wp_localize_script( 'astra-customizer-preview-js', 'astraCustomizer', $localize_array );
+		}
+
+		/**
+		 * Detach astra-settings option filters before the customizer saves settings.
+		 *
+		 * Plugins like WPML String Translation filter `option_astra-settings` to swap admin texts
+		 * with translations. The customizer merges changed settings into the filtered array and
+		 * saves it, which would permanently store translated strings in the database.
+		 *
+		 * @return void
+		 *
+		 * @since 4.13.9
+		 */
+		public function detach_option_filters() {
+			$this->detached_option_filters = array_merge( $this->detached_option_filters, astra_detach_option_filters() );
+		}
+
+		/**
+		 * Restore the astra-settings option filters detached before the customizer save.
+		 *
+		 * @return void
+		 *
+		 * @since 4.13.9
+		 */
+		public function restore_option_filters() {
+			astra_restore_option_filters( $this->detached_option_filters );
+			$this->detached_option_filters = array();
 		}
 
 		/**

@@ -3,14 +3,14 @@
  * Plugin Name:         Social Icons, Share Buttons & Click to Chat by WPZOOM
  * Plugin URI:          https://www.wpzoom.com/plugins/social-share/
  * Description:         Add social icons, share buttons, and a floating Click to Chat button to your website. Link to your social profiles, let visitors share your content, and connect instantly via WhatsApp, Telegram, Messenger, and Viber. Supports 400+ icons, customizable colors, and drag-and-drop sorting.
- * Version:             4.6.0
+ * Version:             4.6.1
  * Author:              WPZOOM
  * Author URI:          https://www.wpzoom.com/
  * Text Domain:         social-icons-widget-by-wpzoom
  * License:             GNU General Public License v2.0 or later
  * License URI:         http://www.gnu.org/licenses/gpl-2.0.txt
  * Requires at least:   6.5
- * Tested up to:        7.0
+ * Tested up to:        7.1
  *
  * @package WPZOOM_Social_Icons
  */
@@ -61,6 +61,53 @@ if ( is_admin() && ! class_exists( 'WPZOOM_Notice_Center' ) && file_exists( $wpz
 require_once plugin_dir_path( __FILE__ ) . 'includes/classes/class-wpzoom-sharing-buttons-notice.php';
 require_once plugin_dir_path( __FILE__ ) . 'includes/classes/class-wpzoom-click-to-chat-notice.php';
 require_once plugin_dir_path( __FILE__ ) . 'includes/classes/class-wpzoom-social-icons-upsell.php';
+
+/**
+ * One-time migration for the icon-set defaults change (only Socicons is
+ * enabled out of the box now). Sites that were already using the plugin
+ * without ever saving the settings page used to get every icon set loaded —
+ * persist that legacy behavior for them so no icons break, and let only
+ * fresh installs pick up the slim defaults.
+ *
+ * @return void
+ */
+function zoom_social_icons_migrate_kit_defaults() {
+	if ( get_option( 'wpzoom_social_icons_kit_defaults_migrated' ) ) {
+		return;
+	}
+
+	// Sites that saved the settings page keep their saved values — nothing to do.
+	if ( false === get_option( WPZOOM_Social_Icons_Settings::$option_name ) ) {
+		$widget_instances = get_option( 'widget_zoom-social-icons-widget' );
+		$in_use           = is_array( $widget_instances ) && count( array_filter( array_keys( $widget_instances ), 'is_numeric' ) ) > 0;
+
+		if ( ! $in_use ) {
+			$block_widgets = wp_json_encode( get_option( 'widget_block', array() ) );
+			$in_use        = false !== strpos( (string) $block_widgets, 'wpzoom-blocks/social-icons' );
+		}
+
+		if ( ! $in_use ) {
+			global $wpdb;
+			$in_use = (bool) $wpdb->get_var(
+				"SELECT ID FROM {$wpdb->posts}
+				 WHERE post_status NOT IN ( 'trash', 'auto-draft' )
+				 AND ( post_content LIKE '%wpzoom-blocks/social-icons%' OR post_content LIKE '%[zoom_social_icons%' )
+				 LIMIT 1"
+			);
+		}
+
+		if ( $in_use ) {
+			$legacy_settings = WPZOOM_Social_Icons_Settings::$option_defaults;
+			foreach ( array( 'academicons', 'font-awesome-3', 'font-awesome-5', 'genericons', 'dashicons', 'socicons' ) as $kit ) {
+				$legacy_settings[ 'disable-css-loading-for-' . $kit ] = true;
+			}
+			update_option( WPZOOM_Social_Icons_Settings::$option_name, $legacy_settings );
+		}
+	}
+
+	update_option( 'wpzoom_social_icons_kit_defaults_migrated', 1 );
+}
+add_action( 'plugins_loaded', 'zoom_social_icons_migrate_kit_defaults' );
 
 $current_theme = get_template();
 if( 'inspiro' !== $current_theme  ) {

@@ -74,6 +74,24 @@ class WP_Optimize_Utils {
 	}
 
 	/**
+	 * Returns file path relative to the `wp-content` directory
+	 *
+	 * @param string $path
+	 * @return string
+	 */
+	public static function get_wp_relative_path($path): string {
+		$path = wp_normalize_path($path);
+		$content_dir = wp_normalize_path(WP_CONTENT_DIR);
+	
+		$pos = strpos($path, $content_dir);
+		if (false === $pos) {
+			return $path;
+		}
+	
+		return substr($path, strlen($content_dir)+1) ?: '';
+	}
+
+	/**
 	 * Get the file path
 	 *
 	 * @param string $url
@@ -131,8 +149,14 @@ class WP_Optimize_Utils {
 				
 				foreach ($dir as $file) {
 					if (!empty($files_to_ignore) && is_array($files_to_ignore) && in_array($file->getFilename(), $files_to_ignore)) continue;
-					$size += $file->getSize();
-					$file_count++;
+					try {
+						if ($file->isFile()) {
+							$size += $file->getSize();
+							$file_count++;
+						}
+					} catch (RuntimeException $e) {
+						error_log($e->getMessage()); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log -- Catching exception for debugging purpose
+					}
 				}
 			} catch (UnexpectedValueException $e) {
 				error_log($e->getMessage()); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log -- Catching exception for debugging purpose
@@ -216,7 +240,7 @@ class WP_Optimize_Utils {
 	 * Returns simplehtmldom\HtmlDocument object
 	 *
 	 * @param string $html_buffer - HTML document as string
-	 * @return simplehtmldom\HtmlDocument | boolean
+	 * @return simplehtmldom\HtmlDocument | false
 	 */
 	public static function get_simple_html_dom_object($html_buffer) {
 		self::maybe_include_simple_html_dom();
@@ -381,6 +405,66 @@ class WP_Optimize_Utils {
 		}
 
 		return esc_url(add_query_arg($utm_params, $url));
+	}
+
+	/**
+	 * Defines MAX_FILE_SIZE constant if not already defined.
+	 *
+	 * @return void
+	 */
+	public static function define_maxfile_size_constant() {
+		$maxfile_size = apply_filters('wpo_max_file_size', 600000);
+		$maxfile_size = is_numeric($maxfile_size) && $maxfile_size > 0 ? (int) $maxfile_size : 600000;
+		if (!defined('MAX_FILE_SIZE')) {
+			define('MAX_FILE_SIZE', $maxfile_size);
+		}
+	}
+
+	/**
+	 * Check if the given array contains all key-value pairs of another array.
+	 *
+	 * @param array $needle   The array of key-value pairs to check for.
+	 * @param array $haystack The array to check within.
+	 * @return bool True if $haystack contains all key-value pairs of $needle, false otherwise.
+	 */
+	public static function array_contains($needle, $haystack): bool {
+
+		if (!is_array($needle) || !is_array($haystack)) return false;
+
+		foreach ($needle as $key => $value) {
+			if (!array_key_exists($key, $haystack)) return false;
+
+			if (is_array($value)) {
+				if (!is_array($haystack[$key])) return false;
+				if (!self::array_contains($value, $haystack[$key])) return false;
+			} elseif ($haystack[$key] != $value) { // Loose comparison is intentional here to allow type juggling, e.g. '1' == 1 since we check sent form data with saved options where types can be different
+				return false;
+			}
+		}
+
+		return true;
+	}
+
+	/**
+	 * Check if the current user has permission to purge cache.
+	 *
+	 * @return bool
+	 */
+	public static function current_user_can_purge_cache() {
+		if (WP_Optimize::is_premium()) {
+			return WP_Optimize()->current_user_can() || WP_Optimize_Premium()->can_purge_the_cache();
+		} else {
+			return WP_Optimize()->current_user_can();
+		}
+	}
+
+	/**
+	 * Get URL without purge cache-related parameters.
+	 *
+	 * @return string
+	 */
+	public static function get_url_without_cache_purge_params() {
+		return remove_query_arg(array('_wpo_purge', 'wpo_minify_cache_purged', '_wpo_purge_minify_cache', 'wpo_all_pages_cache_purged', 'wpo_single_page_cache_purged'));
 	}
 }
 
