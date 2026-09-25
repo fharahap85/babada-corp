@@ -31,17 +31,24 @@ class WPZOOM_Social_Icons_Settings {
 	/**
 	 * Settings options defaults
 	 *
+	 * Note: despite the "disable-" prefix, a TRUE value means the icon set
+	 * IS loaded. Only Socicons (the native set) is enabled by default —
+	 * every extra set costs a render-blocking stylesheet plus a preloaded
+	 * font file on each page. Sites that already used the plugin before
+	 * this change are migrated once to all-enabled on upgrade
+	 * (see zoom_social_icons_migrate_kit_defaults()).
+	 *
 	 * @var array
 	 */
 	public static $option_defaults = array(
 		'disable-widget'                         => false,
 		'disable-block'                          => false,
 		'disable-fonts-preloading'               => true,
-		'disable-css-loading-for-academicons'    => true,
-		'disable-css-loading-for-font-awesome-3' => true,
-		'disable-css-loading-for-font-awesome-5' => true,
-		'disable-css-loading-for-genericons'     => true,
-		'disable-css-loading-for-dashicons'      => true,
+		'disable-css-loading-for-academicons'    => false,
+		'disable-css-loading-for-font-awesome-3' => false,
+		'disable-css-loading-for-font-awesome-5' => false,
+		'disable-css-loading-for-genericons'     => false,
+		'disable-css-loading-for-dashicons'      => false,
 		'disable-css-loading-for-socicons'       => true,
 		'categories-sync'                        => true,
 		'custom-icon-set'                        => array(),

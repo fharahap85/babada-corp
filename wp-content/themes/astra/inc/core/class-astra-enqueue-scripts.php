@@ -42,6 +42,7 @@ if ( ! class_exists( 'Astra_Enqueue_Scripts' ) ) {
 			add_action( 'astra_get_fonts', array( $this, 'add_fonts' ), 1 );
 			add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_scripts' ), 1 );
 			add_action( 'enqueue_block_editor_assets', array( $this, 'gutenberg_assets' ) );
+			add_action( 'enqueue_block_assets', array( $this, 'gutenberg_block_assets' ) );
 			add_filter( 'admin_body_class', array( $this, 'admin_body_class' ) );
 			add_action( 'wp_print_footer_scripts', array( $this, 'astra_skip_link_focus_fix' ) );
 			add_filter( 'gallery_style', array( $this, 'enqueue_galleries_style' ) );
@@ -49,11 +50,27 @@ if ( ! class_exists( 'Astra_Enqueue_Scripts' ) ) {
 		}
 
 		/**
-		 * Output an early inline script immediately after <body> opens to apply
-		 * `ast-header-break-point` before the header is painted, preventing FOUC
-		 * on mobile with the inline Logo + Site Title + Tagline layout.
+		 * Output an early inline script immediately after <body> opens to apply the
+		 * correct header breakpoint class (`ast-header-break-point`/`ast-desktop`)
+		 * before the header is painted, preventing FOUC on mobile widths.
+		 *
+		 * The script also subscribes to the breakpoint media query, so the body class
+		 * stays in sync when the viewport crosses the breakpoint (browser resize,
+		 * tablet orientation change) even while the main frontend script is still
+		 * loading — e.g. on slow networks or when script execution is deferred by
+		 * optimization plugins. Without this, a stale `ast-header-break-point` class
+		 * left over from a narrower viewport keeps mobile menu styles (stacked menu,
+		 * visible submenus) applied to the desktop header until frontend.js executes.
+		 *
+		 * Script tag attributes are provided by the `header-breakpoint-script`
+		 * context of astra_attr(), so they can be adjusted via the
+		 * `astra_attr_header-breakpoint-script` filter. The default
+		 * `data-cfasync="false"` excludes the script from Cloudflare Rocket Loader
+		 * so it is never deferred past first paint.
 		 *
 		 * @since 4.13.1
+		 * @since 4.13.9 Sync the class in both directions and subscribe to media query
+		 *              changes instead of a one-shot mobile-only check.
 		 * @return void
 		 */
 		public function set_header_break_point_early() {
@@ -63,8 +80,8 @@ if ( ! class_exists( 'Astra_Enqueue_Scripts' ) ) {
 			}
 			$break_point = astra_header_break_point();
 			?>
-			<script>
-			(function(){var w=document.documentElement.clientWidth;if(w>0&&w<=<?php echo absint( $break_point ); ?>){document.body.classList.add('ast-header-break-point');document.body.classList.remove('ast-desktop');}})();
+			<script <?php echo astra_attr( 'header-breakpoint-script', array( 'class' => '', 'data-cfasync' => 'false' ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped, WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound -- astra_attr() escapes attribute output. ?>>
+			(function(){var mq=window.matchMedia('(max-width:<?php echo number_format( absint( $break_point ) + 0.99, 2, '.', '' ); ?>px)');function apply(isMobile){var b=document.body.classList;if(isMobile){b.add('ast-header-break-point');b.remove('ast-desktop');}else{b.remove('ast-header-break-point');b.add('ast-desktop');}}apply(mq.matches);if(mq.addEventListener){mq.addEventListener('change',function(e){apply(e.matches);});}else if(mq.addListener){mq.addListener(function(e){apply(e.matches);});}})();
 			</script>
 			<?php
 		}
@@ -794,12 +811,6 @@ if ( ! class_exists( 'Astra_Enqueue_Scripts' ) ) {
 				return;
 			}
 
-			/* Directory and Extension */
-			$rtl = '';
-			if ( is_rtl() ) {
-				$rtl = '-rtl';
-			}
-
 			$js_prefix = SCRIPT_DEBUG ? '' : 'minified/';
 			$js_suffix = SCRIPT_DEBUG ? '' : '.min';
 			$js_uri    = ASTRA_THEME_URI . 'inc/assets/js/' . $js_prefix . 'block-editor-script' . $js_suffix . '.js';
@@ -840,8 +851,28 @@ if ( ! class_exists( 'Astra_Enqueue_Scripts' ) ) {
 			);
 
 			wp_localize_script( 'astra-block-editor-script', 'astraColors', apply_filters( 'astra_theme_root_colors', $astra_colors ) );
+		}
 
-			// Render fonts in Gutenberg layout.
+		/**
+		 * Enqueue editor CSS via enqueue_block_assets so WordPress injects them
+		 * into the block editor iframe canvas correctly (WP 6.5+).
+		 *
+		 * @since 4.13.5
+		 * @return void
+		 */
+		public function gutenberg_block_assets() {
+			if ( ! is_admin() ) {
+				return;
+			}
+
+			if ( is_customize_preview() ) {
+				return;
+			}
+
+			/* Directory and Extension */
+			$rtl = is_rtl() ? '-rtl' : '';
+
+			// Render fonts so Google Fonts are enqueued into the iframe.
 			Astra_Fonts::render_fonts();
 
 			if ( astra_block_based_legacy_setup() ) {

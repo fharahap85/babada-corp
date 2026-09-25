@@ -1,5 +1,82 @@
 == Changelog ==
 
+= 4.6.1 - 29/Jul/2026 =
+
+* FIX: CSS exclusions added via Minify -> Advanced -> Exclude are now saved on separate lines, preventing invalid exclusion entries
+* FIX: Fixed compatibility issue with the WooCommerce multi-currency plugin
+* FIX: Incorrect WebP browser detection for Firefox users
+* FIX: Misaligned UI issue in minify admin pages
+* FIX: Mobile UI issues
+* FIX: Prevent caching pages when a WooCommerce cart has content
+* FIX: UI freezes when restoring a compressed image
+* REFACTOR: Use WP_Optimize_Utils::get_url_without_cache_purge_params() for admin bar links
+* REFACTOR: WPO_KD_Submissions_Compatibility class
+* REFACTOR: WP_Optimize_Server_Compatibility class
+* REFACTOR: WPO_Polylang_Compatibility class
+* TWEAK: Clear cached local Google Fonts statistics when the CSS font file is downloaded
+* TWEAK: Create a new class named WP_Optimize_UpdraftCentral_Commands to group UpdraftCentral specific commands, currently including methods for retrieving and updating WP-Optimize settings
+* TWEAK: Removed deprecated UpdraftCentral commands from WP_Optimize_Commands class
+* TWEAK: Removed unused phpseclib dependency from composer
+* TWEAK: Smush post meta keys are prefixed with `_` and now is multisite compatible
+
+= 4.6.0 - 06/Jul/2026 =
+
+* FEATURE: Premium - Automatically preloads the page’s Largest Contentful Paint (LCP) element to improve initial load speed and perceived performance
+* FIX: Cache - Fixed an issue related to cache setting saving
+* FIX: Fixed a UI issue in WooCommerce variation products when Automatically preload content after it is purged is enabled
+* FIX: Fixed browser caching issue where admin pages were cached
+* FIX: Mobile UI issue
+* FIX: Notice Dismissal issue
+* FIX: Usage of htmlspecialchars()
+* REFACTOR: Code from can_purge_cache() method moved to WP_Optimize_Utils::current_user_can_purge_cache()
+* REFACTOR: Fix WordPress Security check errors and warnings on admin page
+* REFACTOR: Make `is_edit_mode` a static method and avoid duplication
+* REFACTOR: Optimized WP_Optimize_Database_Information::get_table_plugin() method
+* TWEAK: Added method to check current user has the capability
+* TWEAK: Added methods to retrieve and save essential WP-Optimize toggleable settings for UpdraftCentral
+* TWEAK: Disable and hide the "Speed up WooCommerce 'Get total spent' query" Power Tweak when it's no longer relevant
+* TWEAK: Handle race conditions in font downloading and optimize cache stats storage 
+* TWEAK: Improved image grid action button visibility to accommodate WordPress 7.0 button styling changes
+* TWEAK: Matched response styles when purging via the admin bar
+* TWEAK: Premium - Handle empty orders in WooCommerce Total Spent Power Tweak feature
+* TWEAK: Premium - Improved hash logic for the Unused CSS Removal feature
+* TWEAK: Prevent unwanted cache growth caused by crawlers or preload bots
+* TWEAK: UI changes to match WordPress 7.0 
+* TWEAK: Unschedule all WP-Optimize cron jobs on deactivation in multisite
+* TWEAK: WP_Optimize_Power_Tweaks class method deactivate bug fixed related to the array_diff function
+
+= 4.5.5 - 05/Jun/2026 =
+
+* TWEAK: Update the bundled common-libs version
+
+= 4.5.4 - 25/May/2026 =
+
+* FIX: WebP image compression breaking in some cases
+* REFACTOR: Avoid instantiating PHPSQLParser on each call in WPO_DB_Table_Analysis
+* REFACTOR: Class WPO_WebP_Convert
+* REFACTOR: Make markup readable in `tables-body.php` template
+* REFACTOR: Refactored duplicated cache_admin_bar logic by centralizing it in the admin class and removing redundant implementations.
+* REFACTOR: Removed unused `WPO_Htaccess_Capabilities` class
+* REFACTOR: WPO_Activation class
+* REFACTOR: WPO_Uninstall class
+* REFACTOR: WPO_WebP_Alter_HTML class
+* REFACTOR: WPO_WebP_Self_Test class
+* REFACTOR: WPO_WebP_Test_Run class
+* REFACTOR: WPO_WebP_Utils class
+* REFACTOR: WPO_Webp_Task_Manager class
+* REFACTOR: WP_Optimize_WebP class
+* REFACTOR: WP_Optimize_WebP_Images class
+* TWEAK: Added an additional check to prevent SplFileInfo::getSize() RuntimeException in WP_Optimize_Utils::get_folder_stats()
+* TWEAK: All in One SEO plugin compatibility issue
+* TWEAK: Cache - Inconsistent REST cache filenames due to query parameter order 
+* TWEAK: Cache - Set the purge old cache cron schedule based on the Cache lifespan setting
+* TWEAK: Ensure parsed result is an array in WPO_DB_Table_Analysis::get_query_table()
+* TWEAK: Exclude GIF from being converted to WebP with `wpo_webp_convert_compressed_images` cron job
+* TWEAK: Optimized `wpo_username_from_cookies()` to avoid repeated database queries per request
+* TWEAK: Precheck for existing WebP format of file before running WebP conversion
+* TWEAK: Remove redundant code that is not reachable.
+* TWEAK: Resolved edge cases in CapoJS
+
 = 4.5.3 - 29/Apr/2026 =
 * SECURITY: Prevented path traversal security risk. Thanks to Wordfence for the responsible disclosure
 

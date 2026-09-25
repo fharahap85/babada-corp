@@ -13,6 +13,11 @@ if (!defined('WPO_CACHE_EXT_DIR')) define('WPO_CACHE_EXT_DIR', dirname(__FILE__)
 if (!defined('WPO_CACHE_FILES_DIR')) define('WPO_CACHE_FILES_DIR', untrailingslashit(WP_CONTENT_DIR).'/cache/wpo-cache');
 
 /**
+ * Minimum Firefox version for WebP support
+ */
+if (!defined('WPO_MIN_FIREFOX_VERSION_FOR_WEBP')) define('WPO_MIN_FIREFOX_VERSION_FOR_WEBP', '65.0.0');
+
+/**
  * Holds utility functions used by file based cache
  */
 
@@ -90,8 +95,12 @@ if (!function_exists('wpo_cache')) :
 			}
 		}
 		
+		if (wpo_restricted_cache_page_with_cart_items()) {
+			$no_cache_because[] = __('User has items in WooCommerce cart.', 'wp-optimize');
+		}
+
 		$can_cache_page = true;
-		
+
 		if (defined('DONOTCACHEPAGE') && DONOTCACHEPAGE) {
 			$can_cache_page = false;
 		}
@@ -128,10 +137,12 @@ if (!function_exists('wpo_cache')) :
 
 		// Get cache file name
 		$file_ext = '.html';
+		$is_feed_cache = false;
 			
 		if (wpo_feeds_caching_enabled()) {
 			if (is_feed()) {
 				$file_ext = '.rss-xml';
+				$is_feed_cache = true;
 			}
 		}
 		
@@ -165,11 +176,11 @@ if (!function_exists('wpo_cache')) :
 			wpo_cache_add_nocache_http_header($message);
 			
 			if ((!defined('DOING_CRON') || !DOING_CRON) && (!defined('REST_REQUEST') || !REST_REQUEST)) {
-				$not_cached_details = "";
+				$not_cached_details = '';
 				
 				// Output the reason only when the user has turned on debugging
 				if (((defined('WP_DEBUG') && WP_DEBUG) || isset($_GET['wpo_cache_debug']))) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Not using the value, only checks for existence
-					$not_cached_details = "because: ".htmlspecialchars($message) . " ";
+					$not_cached_details = "because: ".htmlspecialchars($message, ENT_QUOTES, 'UTF-8') . " ";
 				}
 				
 				$buffer .= sprintf("\n<!-- WP Optimize page cache - https://teamupdraft.com/wp-optimize/ - page NOT cached %s-->\n", $not_cached_details);
@@ -238,13 +249,30 @@ if (!function_exists('wpo_cache')) :
 			if (defined('WPO_CACHE_FILENAME_DEBUG') && WPO_CACHE_FILENAME_DEBUG) {
 				$add_to_footer .= "\n<!-- WP Optimize page cache debug information -->\n";
 				if (!empty($GLOBALS['wpo_cache_filename_debug']) && is_array($GLOBALS['wpo_cache_filename_debug'])) {
-					$add_to_footer .= "<!-- \n" . join("\n", array_map('htmlspecialchars', $GLOBALS['wpo_cache_filename_debug'])) . "\n -->";
+					$add_to_footer .= "<!-- \n" . join("\n", array_map(function($s) {
+						return htmlspecialchars((string) $s, ENT_QUOTES, 'UTF-8');
+					}, $GLOBALS['wpo_cache_filename_debug'])) . "\n -->";
 				}
 			}
 
 			if (function_exists('gzencode') && apply_filters('wpo_allow_cache_gzip_files', true)) {
 				// Only replace inside the addition, not inside the main buffer (e.g. post content)
 				$add_to_footer = str_replace('by WP-Optimize', 'by WP-Optimize (gzip)', $add_to_footer);
+			}
+
+			// Allow extensions to inject content before </body> in cached HTML (HTML pages only, not sitemaps or RSS feeds).
+			// Content is inserted before the last </body> tag to produce valid HTML.
+			// Falls back to appending after </html> if no </body> is found (e.g., partial HTML responses).
+			if (!wpo_is_cacheable_sitemap_request() && !$is_feed_cache) {
+				$footer_injection = apply_filters('wpo_cache_add_to_footer', '', $cache_filename);
+				if ('' !== $footer_injection) {
+					$body_close_pos = strripos($buffer, '</body>');
+					if (false !== $body_close_pos) {
+						$buffer = substr($buffer, 0, $body_close_pos) . $footer_injection . substr($buffer, $body_close_pos);
+					} else {
+						$buffer .= $footer_injection;
+					}
+				}
 			}
 
 			// XML documents must not contain HTML comments in the footer, as this would invalidate the XML
@@ -425,8 +453,8 @@ if (!function_exists('wpo_cache_filename')) :
 		if (wpo_cache_mobile_caching_enabled() && wpo_is_mobile()) {
 			$filename = 'mobile.' . $filename;
 		}
-		
-		if (wpo_webp_images_enabled() && !wpo_is_using_webp_images_redirection() && wpo_is_using_alter_html()) {
+
+		if (wpo_webp_images_enabled() && !wpo_is_using_webp_images_redirection() && wpo_is_browser_supports_webp()) {
 			$filename = $filename . '.webp';
 		}
 		
@@ -529,6 +557,7 @@ function wpo_rest_cache_filename($params) {
 	$cache_key = '';
 
 	if (!empty($params)) {
+		ksort($params);
 		foreach ($params as $key => $value) {
 			if (is_array($value)) $value = serialize($value);
 			$_cache_key = $key.'_'.$value;
@@ -707,13 +736,25 @@ if (!function_exists('wpo_webp_images_enabled')) :
 endif;
 
 /**
- * Check whether webp images using alter html method or not
+ * Check whether the requesting browser supports WebP images
  *
  * @return bool
  */
-if (!function_exists('wpo_is_using_alter_html')) :
-	function wpo_is_using_alter_html() {
-		return (isset($_SERVER['HTTP_ACCEPT']) && false !== strpos($_SERVER['HTTP_ACCEPT'], 'image/webp')); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.MissingUnslash, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Executes before WP fully loads, only doing string comparison
+if (!function_exists('wpo_is_browser_supports_webp')) :
+	function wpo_is_browser_supports_webp() {
+		// Direct Accept header check (works for image sub-resource requests)
+		if (isset($_SERVER['HTTP_ACCEPT']) && false !== strpos($_SERVER['HTTP_ACCEPT'], 'image/webp')) { // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.MissingUnslash, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Executes before WP fully loads, only doing string comparison
+			return true;
+		}
+
+		// Fallback for older Firefox versions, which support WebP but don't send 'image/webp' in the Accept header.
+		$user_agent = isset($_SERVER['HTTP_USER_AGENT']) ? $_SERVER['HTTP_USER_AGENT'] : ''; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.MissingUnslash, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Executes before WP fully loads, only extracting a version number via regex for a version_compare, not used for output or storage
+
+		if (!empty($user_agent) && preg_match('/Firefox\/([\d\.]+[a-z\d]*)/', $user_agent, $matches)) {
+			return version_compare(WPO_MIN_FIREFOX_VERSION_FOR_WEBP, $matches[1], '<=');
+		}
+
+		return false;
 	}
 endif;
 
@@ -809,7 +850,9 @@ if (!function_exists('wpo_serve_cache')) :
 		if ($use_gzip) $path .= '.gz';
 		
 		$modified_time = file_exists($path) ? (int) filemtime($path) : time();
-		
+
+		$modified_time = apply_filters('wpo_cache_modified_time', $modified_time, $path);
+
 		// Cache has expired, purge and exit.
 		if (!empty($GLOBALS['wpo_cache_config']['page_cache_length'])) {
 			if (time() > ($GLOBALS['wpo_cache_config']['page_cache_length'] + $modified_time)) {
@@ -961,7 +1004,7 @@ function wpo_can_serve_from_cache() {
 	}
 
 	// check in not disabled current user agent
-	$user_agent = isset($_SERVER['HTTP_USER_AGENT']) && is_string($_SERVER['HTTP_USER_AGENT']) ? htmlspecialchars(stripslashes($_SERVER['HTTP_USER_AGENT'])) : ''; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized, WordPress.Security.ValidatedSanitizedInput.MissingUnslash -- false positive
+	$user_agent = isset($_SERVER['HTTP_USER_AGENT']) && is_string($_SERVER['HTTP_USER_AGENT']) ? stripslashes($_SERVER['HTTP_USER_AGENT']) : ''; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput -- value used for comparison only, not output
 	if (!empty($user_agent) && false === wpo_is_accepted_user_agent($user_agent)) {
 		$no_cache_because[] = "In the settings, caching is disabled for matches for this request's user agent";
 	}
@@ -999,6 +1042,10 @@ function wpo_can_serve_from_cache() {
 				}
 			}
 		}
+	}
+
+	if (wpo_restricted_cache_page_with_cart_items()) {
+		$no_cache_because[] = 'User has items in WooCommerce cart.';
 	}
 
 	$restricted_page_type_cache = wpo_restricted_cache_page_type('');
@@ -1043,6 +1090,17 @@ function wpo_can_serve_from_cache() {
 	
 	return true;
 }
+endif;
+
+/**
+ * Checks if the current request has WooCommerce cart items.
+ *
+ * @return bool Returns true if the user has items in the WooCommerce cart, false otherwise.
+ */
+if (!function_exists('wpo_restricted_cache_page_with_cart_items')) :
+	function wpo_restricted_cache_page_with_cart_items(): bool {
+		return !empty($_COOKIE['woocommerce_items_in_cart']) || !empty($_COOKIE['woocommerce_cart_hash']);
+	}
 endif;
 
 /**
@@ -1149,19 +1207,14 @@ if (!function_exists('wpo_get_url_path')) :
 		$url = '' === $url ? wpo_current_url() : $url;
 		$url_parts = parse_url($url); // phpcs:ignore WordPress.WP.AlternativeFunctions.parse_url_parse_url -- wp_parse_url not available this early
 
+		// Normalize path to avoid issues with encoded characters, and to ensure that the path is consistent.
+		if (isset($url_parts['path'])) {
+			$url_parts['path'] = wpo_normalize_url_path($url_parts['path']);
+		}
+
 		if (isset($url_parts['path']) && false !== stripos($url_parts['path'], '/index.')) {
 			$url_parts['path'] = preg_replace('/(.*?)index\.(php|html)(\/.+)/i', '$1index-$2$3', $url_parts['path']);
 			$url_parts['path'] = preg_replace('/index\.(php|html)/i', 'index-$1', $url_parts['path']);
-		}
-		
-		/*
-		 * Convert the hexadecimal digits within the percent-encoded triplet to uppercase, to ensure that the path remains
-		 * consistent. For instance, "example.com/%e0%a6" will be converted to "example.com/%E0%A6".
-		 */
-		if (isset($url_parts['path'])) {
-			$url_parts['path'] = preg_replace_callback('/%[0-9A-F]{2}/i', function($matches) {
-				return strtoupper($matches[0]);
-			}, $url_parts['path']);
 		}
 		
 		if (!isset($url_parts['host'])) $url_parts['host'] = '';
@@ -2041,6 +2094,30 @@ if (!function_exists('wpo_normalize_path')) {
 		return $path;
 	}
 }
+
+/**
+ * Normalize url path
+ *
+ * @param string $url_path
+ * @return string
+ */
+if (!function_exists('wpo_normalize_url_path')) :
+	function wpo_normalize_url_path($url_path) {
+		$prev = null;
+		$iterations = 0;
+		
+		while ($url_path !== $prev && 5 > $iterations) {
+			$prev = $url_path;
+			$url_path = rawurldecode($url_path);
+			$iterations++;
+		}
+
+		$url_path = preg_replace('/\.\.?\//', '-', $url_path); // replace './' and '../' with '-' to prevent directory traversal
+		$url_path = strtolower($url_path);
+		
+		return $url_path;
+	}
+endif;
 
 /**
  * Get path to wp-config.php when called from WP-CLI.

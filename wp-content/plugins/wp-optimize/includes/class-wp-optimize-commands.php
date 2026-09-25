@@ -81,7 +81,7 @@ class WP_Optimize_Commands {
 	 * @return WP_Error|void
 	 */
 	public function download_csv() {
-		if (!current_user_can(WP_Optimize()->capability_required())) {
+		if (!WP_Optimize()->current_user_can()) {
 			return $this->request_error('insufficient_privilege');
 		}
 	
@@ -96,7 +96,7 @@ class WP_Optimize_Commands {
 	 * @return array|WP_Error
 	 */
 	public function get_section($params) {
-		if (!current_user_can(WP_Optimize()->capability_required())) {
+		if (!WP_Optimize()->current_user_can()) {
 			return $this->request_error('insufficient_privilege');
 		}
 
@@ -125,7 +125,7 @@ class WP_Optimize_Commands {
 	 * @return array|WP_Error
 	 */
 	public function get_database_tabs_info() {
-		if (!current_user_can(WP_Optimize()->capability_required())) {
+		if (!WP_Optimize()->current_user_can()) {
 			return $this->request_error('insufficient_privilege');
 		}
 
@@ -139,7 +139,7 @@ class WP_Optimize_Commands {
 	 * @return array|WP_Error
 	 */
 	public function updraft_smush_ajax($params) {
-		if (!current_user_can(WP_Optimize()->capability_required())) {
+		if (!WP_Optimize()->current_user_can()) {
 			return $this->request_error('insufficient_privilege');
 		}
 
@@ -188,7 +188,7 @@ class WP_Optimize_Commands {
 	 * @return array|WP_Error
 	 */
 	public function handle_ajax_requests($params) {
-		if (!current_user_can(WP_Optimize()->capability_required())) {
+		if (!WP_Optimize()->current_user_can()) {
 			return $this->request_error('insufficient_privilege');
 		}
 
@@ -196,7 +196,7 @@ class WP_Optimize_Commands {
 		$data = $params['data'];
 
 		$response = array();
-		if (is_multisite() && !current_user_can('manage_network_options')) {
+		if (is_multisite() && !WP_Optimize()->current_user_can('manage_network_options')) {
 			$allowed_multisite_commands = apply_filters('wpo_multisite_allowed_commands', array('check_server_status', 'compress_single_image', 'restore_single_image'));
 
 			if (!in_array($subaction, $allowed_multisite_commands)) {
@@ -279,7 +279,7 @@ class WP_Optimize_Commands {
 	 * @return array|WP_Error
 	 */
 	public function get_posts_list($params) {
-		if (!current_user_can(WP_Optimize()->capability_required())) {
+		if (!WP_Optimize()->current_user_can()) {
 			return $this->request_error('insufficient_privilege');
 		}
 
@@ -506,7 +506,7 @@ class WP_Optimize_Commands {
 	 * @param array  $additional_data Any additional data to return
 	 * @return WP_Error
 	 */
-	private function request_error($code, $message_key = null, $additional_data = array()) {
+	public function request_error($code, $message_key = null, $additional_data = array()) {
 		global $updraftcentral_host_plugin;
 
 		$error_message = $updraftcentral_host_plugin->retrieve_show_message($code);
@@ -1937,10 +1937,14 @@ class WP_Optimize_Commands {
 			'data' => array(),
 		);
 		$scheduled_optimizations_enabled = false;
+		$last_optimized_timestamp = (int) $this->options->get_option('last-optimized', 0);
+		$next_optimization_timestamp = 0;
 		$wp_optimize = WP_Optimize();
+		$is_udc_request = $wp_optimize->is_updraft_central_request();
 
 		if (!$is_premium) {
-			$enabled = 'true' === $this->options->get_option('schedule');
+			$schedule_enabled = $this->options->get_option('schedule');
+			$scheduled_optimizations_enabled = 'true' === $schedule_enabled;
 	
 			$schedule_type_saved_id = $this->options->get_option('schedule-type', 'wpo_weekly');
 	
@@ -1967,7 +1971,7 @@ class WP_Optimize_Commands {
 	
 			$optimizations_data = array();
 
-			$does_server_allow_table_optimization = WP_Optimize()->get_server_compatibility_instance()->does_server_allow_table_optimization();
+			$does_server_allow_table_optimization = $wp_optimize->get_server_compatibility_instance()->does_server_allow_table_optimization();
 
 			foreach ($optimizations as $id => $optimization) {
 				if (empty($optimization->available_for_auto)) continue;
@@ -1988,34 +1992,17 @@ class WP_Optimize_Commands {
 				);
 			}
 
-			$next_optimization_timestamp = 0;
-
-			$scheduled_optimizations_enabled = $this->options->get_option('schedule', 'false') == 'true';
-
-			if ($scheduled_optimizations_enabled) {
-				$next_optimization_timestamp = apply_filters('wpo_cron_next_event', wp_next_scheduled('wpo_cron_event2'));
-
-				if ($next_optimization_timestamp) {
-
-					$next_optimization_timestamp = $next_optimization_timestamp + 60 * 60 * get_option('gmt_offset');
-				}
-			}
-
 			$return_data['data'] = array(
-				'enabled' => $enabled,
 				'schedule_options' => $schedule_options,
 				'schedule_type_saved_id' => $schedule_type_saved_id,
 				'optimizations' => $optimizations_data,
-				'next_optimization' => $next_optimization_timestamp ? esc_html(gmdate(get_option('date_format') . ' ' . get_option('time_format'), $next_optimization_timestamp)) : '',
 				'premium_version_link' => $wp_optimize->premium_version_link,
-				'enable_schedule' => $this->options->get_option('schedule'),
+				'enable_schedule' => $schedule_enabled,
 			);
 		} else {
 			$wp_optimize_premium = WP_Optimize_Premium();
 			$auto_options = $wp_optimize_premium->get_scheduled_optimizations();
 			$auto_optimizations = $wp_optimize_premium->get_auto_optimizations();
-
-			$next_optimization_timestamp = 0;
 
 			if (!empty($auto_options)) {
 				foreach ($auto_options as $optimization) {
@@ -2041,8 +2028,8 @@ class WP_Optimize_Commands {
 				if (!isset($event['optimization'])) {
 					$event['optimization'] = array();
 				}
-				foreach ($event as $key => $value) {
-					switch ($key) {
+				foreach ($event as $event_key => $value) {
+					switch ($event_key) {
 						case 'optimization':
 							$optimization['optimization'] = array();
 							foreach ($all_provided_optimizations as $this_optimization) {
@@ -2073,7 +2060,7 @@ class WP_Optimize_Commands {
 							foreach ($weeks as $key => $this_week_value) {
 								$this_week = array();
 								$this_week['label'] = $this_week_value;
-								$this_week['selected'] = $key === $value;
+								$this_week['selected'] = absint($key) === absint($value);
 								$this_week['value'] = $key;
 								$optimization['weeks'][] = $this_week;
 							}
@@ -2083,7 +2070,7 @@ class WP_Optimize_Commands {
 							foreach ($week_days as $key => $this_week_day_value) {
 								$this_week_day = array();
 								$this_week_day['label'] = $this_week_day_value;
-								$this_week_day['selected'] = $key === $value;
+								$this_week_day['selected'] = absint($key) === absint($value);
 								$this_week_day['value'] = $key;
 								$optimization['days'][] = $this_week_day;
 							}
@@ -2106,14 +2093,6 @@ class WP_Optimize_Commands {
 				$optimizations[] = $optimization;
 			}
 
-			if ($scheduled_optimizations_enabled) {
-				$next_optimization_timestamp = apply_filters('wpo_cron_next_event', wp_next_scheduled('wpo_cron_event2'));
-
-				if ($next_optimization_timestamp) {
-					$next_optimization_timestamp = $next_optimization_timestamp + 60 * 60 * get_option('gmt_offset');
-				}
-			}
-
 			$return_data['data'] = array(
 				'optimizations' => $optimizations,
 				'provided_optimizations' => $all_provided_optimizations,
@@ -2122,12 +2101,26 @@ class WP_Optimize_Commands {
 				'weeks' => $weeks,
 				'week_days' => $week_days,
 				'days' => $days,
-				'next_optimization' => $next_optimization_timestamp ? esc_html(gmdate(get_option('date_format') . ' ' . get_option('time_format'), $next_optimization_timestamp)) : '',
 				'is_auto_innodb' => $this->options->get_option('auto-innodb'),
 				'scheduled_optimizations' => $auto_options,
 				'auto_optimizations' => $auto_optimizations,
 				'warning_url' => $wp_optimize->wp_optimize_url('https://teamupdraft.com/documentation/wp-optimize/topics/database-optimization/faqs/', __('Warning: you should read the FAQ about the risks of this operation first.', 'wp-optimize'), '', '', true)
 			);
+		}
+
+		$return_data['data']['enabled'] = $scheduled_optimizations_enabled;
+		$return_data['data']['next_optimization'] = '';
+
+		if ($scheduled_optimizations_enabled) {
+			$next_optimization_timestamp = apply_filters('wpo_cron_next_event', wp_next_scheduled('wpo_cron_event2'));
+
+			if ($next_optimization_timestamp) {
+				$return_data['data']['next_optimization'] = $is_udc_request ? (int) $next_optimization_timestamp : esc_html(gmdate(get_option('date_format') . ' ' . get_option('time_format'), $next_optimization_timestamp + 60 * 60 * get_option('gmt_offset')));
+			}
+		}
+
+		if ($is_udc_request && $last_optimized_timestamp) {
+			$return_data['data']['last_optimized'] = (int) $last_optimized_timestamp;
 		}
 
 		// Add the translations.

@@ -3,7 +3,7 @@
 Plugin Name: WP-Optimize - Clean, Compress, Cache
 Plugin URI: https://teamupdraft.com/wp-optimize
 Description: WP-Optimize makes your site fast and efficient. It cleans the database, compresses images and caches pages. Fast sites attract more traffic and users.
-Version: 4.5.3
+Version: 4.6.1
 Requires at least: 4.9
 Requires PHP: 7.2
 Update URI: https://wordpress.org/plugins/wp-optimize/
@@ -18,7 +18,7 @@ if (!defined('ABSPATH')) die('No direct access allowed');
 
 // Check to make sure if WP_Optimize is already call and returns.
 if (!class_exists('WP_Optimize')) :
-define('WPO_VERSION', '4.5.3');
+define('WPO_VERSION', '4.6.1');
 define('WPO_PLUGIN_URL', plugin_dir_url(__FILE__));
 define('WPO_PLUGIN_MAIN_PATH', plugin_dir_path(__FILE__));
 define('WPO_PLUGIN_SLUG', plugin_basename(__FILE__));
@@ -91,7 +91,6 @@ class WP_Optimize {
 
 		$this->load_admin();
 		add_action('admin_init', array($this, 'admin_init'));
-		add_action('admin_bar_menu', array($this, 'cache_admin_bar'), 100, 1);
 
 		add_filter("plugin_action_links_".plugin_basename(__FILE__), array($this, 'plugin_settings_link'));
 		add_action('wpo_cron_event2', array($this, 'cron_action'));
@@ -122,7 +121,7 @@ class WP_Optimize {
 		 */
 		add_action('wp_optimize_admin_page_wpo_images_smush', array($this, 'admin_page_wpo_images_smush'));
 
-		include_once(WPO_PLUGIN_MAIN_PATH.'includes/updraftcentral.php');
+		include_once(WPO_PLUGIN_MAIN_PATH.'includes/updraftcentral/updraftcentral.php');
 
 		include_once(WPO_PLUGIN_MAIN_PATH.'includes/backward-compatibility-functions.php');
 				
@@ -222,7 +221,7 @@ class WP_Optimize {
 	 *
 	 * @param string $class_name The name of the class.
 	 */
-	private function loader($class_name) {
+	public function loader($class_name) {
 		$dirs = $this->get_class_directories();
 
 		foreach ($dirs as $dir) {
@@ -267,9 +266,11 @@ class WP_Optimize {
 			'includes/tables',
 			'includes/list-tables',
 			'includes/gravatars',
+			'includes/lcp',
 			'minify',
 			'optimizations',
 			'webp',
+			'includes/updraftcentral',
 		);
 	}
 
@@ -365,7 +366,7 @@ class WP_Optimize {
 	public function admin_page_wpo_images_smush() {
 		$options = Updraft_Smush_Manager()->get_smush_options();
 		$custom = 90 >= $options['image_quality'] && 65 <= $options['image_quality'];
-		$sites = WP_Optimize()->get_sites();
+		$sites = $this->get_sites();
 		$compression_server_hint = Updraft_Smush_Manager()->get_compression_server_hint();
 		$this->include_template('images/smush.php', false, array('smush_options' => $options, 'custom' => $custom, 'sites' => $sites, 'does_server_allow_local_webp_conversion' => $this->get_server_compatibility_instance()->does_server_allow_local_webp_conversion(), 'compression_server_hint' => $compression_server_hint));
 		$this->add_smush_popup_template();
@@ -550,6 +551,15 @@ class WP_Optimize {
 
 		// load scripts and styles only on WP-Optimize pages.
 		if (!$this->is_wpo_page()) return;
+
+		wp_enqueue_script( 'jquery-ui-tooltip' );
+		// Defeat other plugins/themes which dump their jQuery UI CSS onto our settings page
+		wp_deregister_style('jquery-ui');
+		wp_enqueue_style('jquery-ui', WPO_PLUGIN_URL.'css/jquery-ui.custom' . $min_or_not_internal . '.css', array(), $enqueue_version);
+
+
+		wp_enqueue_script('select2', WPO_PLUGIN_URL . 'js/select2/select2' . $min_or_not . '.js', array('jquery'), $enqueue_version);
+		wp_enqueue_style('select2', WPO_PLUGIN_URL . 'css/select2/select2' . $min_or_not . '.css', array(), $enqueue_version);
 				
 		wp_enqueue_script('jquery-serialize-json', WPO_PLUGIN_URL.'js/serialize-json/jquery.serializejson'.$min_or_not.'.js', array('jquery'), $enqueue_version);
 
@@ -591,9 +601,9 @@ class WP_Optimize {
 	 * @return void
 	 */
 	public function frontend_enqueue_scripts() {
-		if (!current_user_can('manage_options') || !is_admin_bar_showing()) return;
+		if (!$this->current_user_can('manage_options') || !is_admin_bar_showing()) return;
 		$enqueue_version = $this->get_enqueue_version();
-		$min_or_not_internal = WP_Optimize()->get_min_or_not_internal_string();
+		$min_or_not_internal = $this->get_min_or_not_internal_string();
 
 		// Register or enqueue common scripts
 		wp_enqueue_style('wp-optimize-global', WPO_PLUGIN_URL.'css/wp-optimize-global'.$min_or_not_internal.'.css', array(), $enqueue_version);
@@ -692,7 +702,7 @@ class WP_Optimize {
 			return;
 		}
 
-		if (is_admin() && current_user_can($this->capability_required())) {
+		if (is_admin() && $this->current_user_can()) {
 			WP_Optimize_Heartbeat::get_instance();
 		}
 
@@ -719,7 +729,7 @@ class WP_Optimize {
 		}
 
 		// load defaults
-		WP_Optimize()->get_options()->set_default_options();
+		$this->get_options()->set_default_options();
 
 		// Initialize loggers.
 		add_action('init', array($this, 'setup_loggers'));
@@ -912,7 +922,7 @@ class WP_Optimize {
 
 		$this->register_template_directories();
 
-		if (('index.php' === $pagenow && current_user_can('update_plugins')) || ('index.php' === $pagenow && defined('WP_OPTIMIZE_FORCE_DASHNOTICE') && WP_OPTIMIZE_FORCE_DASHNOTICE)) {
+		if (('index.php' === $pagenow && $this->current_user_can('update_plugins')) || ('index.php' === $pagenow && defined('WP_OPTIMIZE_FORCE_DASHNOTICE') && WP_OPTIMIZE_FORCE_DASHNOTICE)) {
 			$options = $this->get_options();
 
 			$dismissed_until = $options->get_option('dismiss_dash_notice_until', 0);
@@ -986,9 +996,30 @@ class WP_Optimize {
 	 * @return string
 	 */
 	public function capability_required() {
-		$capability = 'manage_options';
+		$capability = is_multisite() ? 'manage_network_options' : 'manage_options';
+
 		$filtered_capability = apply_filters('wp_optimize_capability_required', $capability);
+
 		return is_string($filtered_capability) ? $filtered_capability : $capability;
+	}
+
+	/**
+	 * Check if the current user has a given capability.
+	 * If no capability is provided, it checks for the default capability required to access WP-Optimize.
+	 *
+	 * @param string|null $capability The capability to check. Null = use default.
+	 * @return bool
+	 */
+	public function current_user_can($capability = null) {
+		if (null === $capability) {
+			$capability = $this->capability_required(); // falls back to default
+		}
+
+		if (current_user_can($capability)) {
+			return true;
+		}
+
+		return false;
 	}
 
 	/**
@@ -1071,39 +1102,6 @@ class WP_Optimize {
 		);
 		$filtered_translations = apply_filters('wpo_js_translations', $translations);
 		return is_array($filtered_translations) ? $filtered_translations : $translations;
-	}
-
-	/**
-	 * Manages the admin bar menu for caching (currently page and minify)
-	 */
-	public function cache_admin_bar($wp_admin_bar) {
-
-		$options = $this->get_options();
-		if (!$options->get_option('enable_cache_in_admin_bar', true)) return;
-
-		/**
-		 * The "purge cache" menu items
-		 *
-		 * @param array  $menu_items - The menu items, in the format required by $wp_admin_bar->add_menu()
-		 * @param object $wp_admin_bar
-		 */
-		$menu_items = apply_filters('wpo_cache_admin_bar_menu_items', array(), $wp_admin_bar);
-
-		if (empty($menu_items) || !is_array($menu_items)) return;
-
-		$wp_admin_bar->add_menu(array(
-			'id'    => 'wpo_purge_cache',
-			'title' => __('Purge cache', 'wp-optimize'),
-			'href'  => '#',
-			'meta'  => array(
-				'title' => __('Purge cache', 'wp-optimize'),
-			),
-			'parent' => false,
-		));
-
-		foreach ($menu_items as $item) {
-			$wp_admin_bar->add_menu($item);
-		}
 	}
 
 	/**
@@ -1231,13 +1229,13 @@ class WP_Optimize {
 
 					add_action('wpo_cron_event2', array($this, 'cron_action'));
 					$result = wp_schedule_event((current_time("timestamp", 0) + $this_time - $gmt_offset), $schedule_type, 'wpo_cron_event2');
-					WP_Optimize()->log('running wp_schedule_event()');
+					$this->log('running wp_schedule_event()');
 					if (is_wp_error($result)) {
 						$error_msg = $result->get_error_message();
-						WP_Optimize()->log($error_msg);
-						WP_Optimize()->log(print_r($result, true)); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_print_r -- Using for debugging purpose, logged into separate file
+						$this->log($error_msg);
+						$this->log(print_r($result, true)); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_print_r -- Using for debugging purpose, logged into separate file
 					} else {
-						WP_Optimize()->log($result);
+						$this->log($result);
 					}
 				}
 			}
@@ -1245,11 +1243,29 @@ class WP_Optimize {
 	}
 
 	/**
-	 * Clears all cron events
+	 * Unschedules WP-Optimize cron events on deactivation.
 	 *
 	 * @return void
 	 */
 	public function wpo_cron_deactivate() {
+		if (is_multisite()) {
+			$sites = $this->get_sites();
+			foreach ($sites as $site) {
+				switch_to_blog($site->blog_id);
+				$this->unschedule_wpo_cron_jobs();
+				restore_current_blog();
+			}
+		} else {
+			$this->unschedule_wpo_cron_jobs();
+		}
+	}
+
+	/**
+	 * Unschedules all WP-Optimize cron jobs on the current site.
+	 *
+	 * @return void
+	 */
+	private function unschedule_wpo_cron_jobs() {
 		$cron_jobs = _get_cron_array();
 		foreach ($cron_jobs as $job) {
 			foreach (array_keys($job) as $hook) {
@@ -2020,7 +2036,7 @@ class WP_Optimize {
 	 * Adds compress popup template
 	 */
 	public function add_smush_popup_template() {
-		if (current_user_can($this->capability_required())) {
+		if ($this->current_user_can()) {
 			$compression_server_hint = Updraft_Smush_Manager()->get_compression_server_hint();
 			$this->include_template('images/smush-popup.php', false, array('compression_server_hint' => $compression_server_hint));
 		}

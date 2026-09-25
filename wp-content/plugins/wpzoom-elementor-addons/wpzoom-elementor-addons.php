@@ -3,14 +3,14 @@
  * Plugin Name:       Elementor Addons by WPZOOM
  * Plugin URI:        https://www.wpzoom.com/plugins/wpzoom-elementor-addons/
  * Description:       A plugin that provides a collection of Elementor Templates and advanced widgets created by the WPZOOM team
- * Version:           1.4.9
+ * Version:           1.4.11
  * Author:            WPZOOM
  * Author URI:        https://www.wpzoom.com/
  * Text Domain:       wpzoom-elementor-addons
  * License:           GNU General Public License v2
  * License URI:       http://www.gnu.org/licenses/gpl-2.0.txt
  * Requires at least: 6.5
- * Tested up to:      7.0
+ * Tested up to:      7.1
  * Elementor tested up to: 4.99
  * Elementor Pro tested up to: 4.99
  *
@@ -206,6 +206,21 @@ final class WPZOOM_Elementor_Addons {
 			'pages_count'      => $pages_count,
 			'sections_count'   => $sections_count,
 			'wireframes_count' => $wireframes_count,
+			'i18n'             => array(
+				'insert_page'      => __( 'Insert Page', 'wpzoom-elementor-addons' ),
+				'insert_section'   => __( 'Insert Section', 'wpzoom-elementor-addons' ),
+				'insert_wireframe' => __( 'Insert Wireframe', 'wpzoom-elementor-addons' ),
+				'unlock_with_pro'  => __( 'Unlock with Pro', 'wpzoom-elementor-addons' ),
+				'wpzoom_library'   => __( 'WPZOOM Library', 'wpzoom-elementor-addons' ),
+
+				'locked_template'  => __( 'This template is only available with WPZOOM Elementor Addons Pro license. Please visit wpzoom.com to get your license key.', 'wpzoom-elementor-addons' ),
+				'license_required' => __( 'This template requires WPZOOM Elementor Addons Pro license.', 'wpzoom-elementor-addons' ),
+				'enter_license'    => __( 'Enter License Key', 'wpzoom-elementor-addons' ),
+				'get_license'      => __( 'Get License Key', 'wpzoom-elementor-addons' ),
+				'import_failed'    => __( 'The template could not be imported. Please try again.', 'wpzoom-elementor-addons' ),
+				'import_invalid'   => __( 'The template could not be imported. Invalid template data.', 'wpzoom-elementor-addons' ),
+				'import_error'     => __( 'The template could not be imported. Please try again or get in touch with the WPZOOM team.', 'wpzoom-elementor-addons' ),
+			),
 		) );
 	}
 

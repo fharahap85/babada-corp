@@ -48,6 +48,8 @@ function wpzoom_social_icons_block_enqueue_assets() {
 		true
 	);
 
+	wp_set_script_translations( 'wpzoom-social-icons-block-js', 'social-icons-widget-by-wpzoom' );
+
 	// Register block editor styles for backend.
 	wp_register_style(
 		'wpzoom-social-icons-block-editor',
