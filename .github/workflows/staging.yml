@@ -40,3 +40,5 @@ jobs:
             **/.git*
             **/.git*/**
             **/node_modules/**
+
+# trigger: 2026-09-25T08:43:43Z
