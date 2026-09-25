@@ -1,0 +1,88 @@
+name: Server Snapshot
+
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: 'probe = cek koneksi & info saja; pack = buat tarball lalu upload artifact'
+        required: true
+        default: 'probe'
+        type: choice
+        options:
+          - probe
+          - pack
+
+jobs:
+  snapshot:
+    name: Server Snapshot (${{ inputs.mode }})
+    runs-on: ubuntu-latest
+    steps:
+      - name: Setup SSH
+        env:
+          SSH_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+          SSH_USER: ${{ secrets.SSH_USER }}
+          SSH_PORT: ${{ secrets.SSH_PORT }}
+        run: |
+          set -euo pipefail
+          mkdir -p ~/.ssh
+          printf '%s\n' "$SSH_KEY" > ~/.ssh/key
+          chmod 600 ~/.ssh/key
+          chmod 700 ~/.ssh
+          printf 'Host *\n  StrictHostKeyChecking no\n  UserKnownHostsFile /dev/null\n  IdentityFile ~/.ssh/key\n  Port %s\n' "$SSH_PORT" > ~/.ssh/config
+          echo "SSH target: $SSH_USER@$SSH_HOST port $SSH_PORT"
+
+      - name: Probe
+        env:
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+          SSH_USER: ${{ secrets.SSH_USER }}
+          SSH_PORT: ${{ secrets.SSH_PORT }}
+        run: |
+          set -euo pipefail
+          ssh -p "$SSH_PORT" -i ~/.ssh/key "$SSH_USER@$SSH_HOST" 'bash -s' <<'EOS'
+          set -x
+          uname -a
+          pwd
+          ls -la
+          for d in ~/public_html /home/babadaco/public_html .; do
+            [ -d "$d" ] && echo "FOUND: $d" && ls "$d" | head -20
+          done
+          EOS
+
+      - name: Pack
+        if: inputs.mode == 'pack'
+        env:
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+          SSH_USER: ${{ secrets.SSH_USER }}
+          SSH_PORT: ${{ secrets.SSH_PORT }}
+        run: |
+          set -euo pipefail
+          ssh -p "$SSH_PORT" -i ~/.ssh/key "$SSH_USER@$SSH_HOST" 'bash -s' <<'EOS'
+          set -euo pipefail
+          ROOT=/home/babadaco/public_html
+          cd "$ROOT"
+          tar --exclude='./wp-content/uploads' \
+              --exclude='./wp-content/cache' \
+              --exclude='./wp-content/litespeed' \
+              --exclude='./wp-content/wpo-cache' \
+              --exclude='./wp-content/wflogs' \
+              --exclude='./wp-content/upgrade' \
+              --exclude='./wp-content/upgrade-temp-backup' \
+              --exclude='./wp-content/maintenance' \
+              --exclude='./wp-content/languages' \
+              --exclude='./wp-content/fonts' \
+              --exclude='./node_modules' \
+              --exclude='.git' \
+              -czf /tmp/snapshot.tar.gz .
+          ls -lh /tmp/snapshot.tar.gz
+          EOS
+          scp -P "$SSH_PORT" -i ~/.ssh/key "$SSH_USER@$SSH_HOST":/tmp/snapshot.tar.gz ./snapshot.tar.gz
+          ls -lh snapshot.tar.gz
+
+      - name: Upload artifact
+        if: inputs.mode == 'pack'
+        uses: actions/upload-artifact@v4
+        with:
+          name: server-snapshot
+          path: snapshot.tar.gz
+          retention-days: 3
