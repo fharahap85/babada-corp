@@ -14,12 +14,16 @@ Isinya adalah **installasi WordPress full (core + theme + plugins)** yang di-tra
 | Item | Nilai |
 |---|---|
 | Situs | https://www.babada.co.id/ |
-| CMS | WordPress `7.0.2` |
-| Theme | Astra `4.13.2` (Brainstorm Force) |
+| Staging | https://staging.babada.co.id/ (child theme `babada-child`, auto-deploy) |
+| CMS | WordPress `7.0.2` (repo) — staging sudah `7.1.2` (lihat §9) |
+| Theme | Astra `4.13.2` (repo) + child `babada-child` — staging Astra `4.13.9` (lihat §9) |
 | PHP | `ea-php83` (PHP 8.3, via handler cPanel) |
 | Hosting | cPanel, docroot `/home/babadaco/public_html/` |
 | Total file ter-track | ± 18.341 file (± 14.830 di `wp-content/`) |
 | Bahasa konten | Indonesia (`llms.txt` → Yoast SEO v28.1) |
+| Cabang | `main` (basis production, semua lewat PR) & `develop` (auto-deploy staging) |
+
+> **Versi di tabel ini = versi repo (`main`).** Server staging sudah lebih baru untuk beberapa komponen — perbandingan lengkap di §9.
 
 ---
 
@@ -93,7 +97,9 @@ Saat ini hanya menyalin `README.md` ke docroot. **Belum melakukan sync WP core/p
 
 ---
 
-## 4. Theme & Plugin (tertrack, versi saat commit terakhir)
+## 4. Theme & Plugin (tertrack di repo, versi saat commit terakhir)
+
+> Angka di bawah = versi yang ada di **repo `main`**. Versi yang terpasang di **server staging** beberapa sudah lebih baru (Wordfence 9.0.0, Yoast 28.2, WP-Optimize 4.6.1, dll.) — lihat tabel perbandingan di §9.
 
 **Theme**
 | Theme | Versi |
@@ -176,3 +182,88 @@ Dibuat Yoast SEO v28.1 untuk dikonsumsi LLM. Isinya daftar URL resmi:
 - Jangan edit blok `BEGIN WordPress` di `.htaccess` secara manual.
 - Update inti WordPress/plugin sebaiknya lewat dashboard WP, lalu commit ulang hasilnya ke repo agar tetap sinkron.
 - File generatif (`advanced-cache.php`, `maintenance.php`) ditulis ulang oleh plugin — perubahan manual bisa hilang.
+
+---
+
+## 9. Status Server, CI/CD & Known Issue
+
+### 9.1 Versi repo vs server staging (dicek 2026-09-25)
+
+Server staging sudah di-update via dashboard WP dan **belum di-commit balik** ke repo. Selisihnya:
+
+| Komponen | Repo `main` | Server staging | Selisih |
+|---|---|---|---|
+| WordPress | 7.0.2 | 7.1.2 | ⚠️ minor |
+| Astra (theme) | 4.13.2 | 4.13.9 | ⚠️ patch |
+| Wordfence | 8.2.2 | 9.0.0 | ⚠️ major |
+| Yoast SEO | 28.1 | 28.2 | patch |
+| Elementor | 4.2.1 | 4.2.2 | patch |
+| WP-Optimize | 4.5.3 | 4.6.1 | minor |
+| WPForms Lite | 2.0.0.2 | 2.0.0.3 | patch |
+| dFlip 3D Flipbook | 2.4.30 | 2.4.37 | patch |
+| Header Footer Elementor | 2.9.2 | 2.9.3 | patch |
+| Insert Headers and Footers | 2.3.8 | 2.3.9 | patch |
+| Quick Adsense | 2.8.7 | 2.9.4 | minor |
+| Social Icons (WPZoom) | 4.6.0 | 4.6.1 | patch |
+| WPZOOM Elementor Addons | 1.4.9 | 1.4.11 | minor |
+| 13 plugin lainnya | — | sama | ✓ |
+
+**Tindakan:** versi repo perlu di-sync ke server (atau sebaliknya) supaya repo tetap jadi cetak biru yang benar — jalur kerjanya ada di [`WORKFLOW.md`](WORKFLOW.md) §1 trigger #1 + §5 (PR).
+
+### 9.2 Environment
+
+| | Production | Staging |
+|---|---|---|
+| URL | https://www.babada.co.id/ | https://staging.babada.co.id/ |
+| Branch | `main` | `develop` |
+| Cara deploy | cPanel Git (`.cpanel.yml`, masih terbatas salin `README.md`) | **GitHub Actions → FTPS** (otomatis) |
+| Tema aktif | — | `babada-child` (child of Astra) |
+| Yang di-deploy CI | — | hanya `wp-content/themes/babada-child/**` |
+
+- **`develop` hanya mem-track `babada-child` + file konfigurasi root** — WP core, Astra, dan semua plugin **tidak ada** di branch ini (di-install langsung di server).
+
+### 9.3 CI/CD — GitHub Actions
+
+File: `.github/workflows/staging.yml` (ada di `develop`, **tidak** di `main`).
+
+```yaml
+name: Deploy Staging
+on:
+  push:
+    branches: [develop]
+    paths:
+      - 'wp-content/themes/babada-child/**'
+      - '.github/workflows/staging.yml'
+  workflow_dispatch:          # ⚠️ tidak bisa dipanggil via API — file tidak ada di default branch
+```
+
+- Aksi: `SamKirkland/FTP-Deploy-Action@v4.4.0` → FTPS port 21, incremental pakai state file `.ftp-deploy-theme-state.json`.
+- Secrets tersedia: `FTP_HOST/USERNAME/PASSWORD`, `SSH_HOST/PORT/USER/PRIVATE_KEY` (SSH belum dipakai workflow mana pun).
+- Warning yang muncul tiap run: `actions/checkout@v4` masih Node 20 (dipaksa ke Node 24), `ubuntu-latest` migrasi ke Ubuntu 26 per 19 Okt 2026.
+- **Belum ada:** test/lint, deploy production, jalur PR otomatis untuk staging.
+
+### 9.4 Known issue — error WP-Optimize Minify (false alarm, tidak berbahaya)
+
+Gejala: di HTML staging muncul komentar
+
+```
+<!-- ERROR: WP-Optimize Minify was not allowed to save its cache on -
+     wp-content/cache/wpo-minify/<hash>/assets/...-babada-child-style....min.css -->
+<!-- Please check if the path above is correct and ensure your server has write permission there! -->
+```
+
+**Penyebab: bukan permission.** Kedua file CSS yang gagal isinya memang kosong:
+
+| File | Isi sumber |
+|---|---|
+| `babada-child/style.css` | hanya komentar header theme (0 aturan CSS) |
+| `wpzoom-portfolio/.../portfolio-layouts/style.css` | 1 byte |
+
+WP-Optimize punya guard `if (empty($code)) continue;` (`class-wp-optimize-minify-front-end.php:2131`) → file tidak pernah ditulis → pengecekan berikutnya `file_exists && filesize > 0` gagal → pesan error menyesatkan yang menyalahkan permission. Folder cache-nya sendiri **bisa ditulis** (file CSS lain di folder yang sama 200 OK).
+
+**Dampak:** nol — CSS-nya memang tidak ada isinya, dan file tidak di-enqueue karena memang kosong. Solusi opsional: beri minimal satu aturan CSS di `babada-child/style.css`, atau abaikan.
+
+### 9.5 Catatan akses
+
+- `.user.ini` & `.htaccess` mengarah ke Wordfence WAF di `/home/babadaco/public_html/wordfence-waf.php` — jangan dihapus selama `auto_prepend_file` masih menunjuk ke sana.
+- Folder `wp-content/cache/` bisa di-list publik (`GET /wp-content/cache/` → 200) — sebaiknya diberi `Options -Indexes` bila cache berisi URL privat.
