@@ -56,7 +56,7 @@ img {
   left: 0 !important;
   right: 0 !important;
   z-index: 1000 !important;
-  transition: background-color 0.3s ease, box-shadow 0.3s ease, padding 0.3s ease !important;
+  transition: background-color 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94), box-shadow 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94) !important;
   background-color: transparent !important;
 }
 
@@ -71,6 +71,7 @@ img {
 .ast-theme-transparent-header .ast-header .main-header-bar-wrap {
   background-color: transparent !important;
   border-bottom: none !important;
+  transition: background-color 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94), border-color 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94) !important;
 }
 
 .ast-theme-transparent-header .site-header.scrolled,
@@ -79,7 +80,7 @@ img {
 .ast-theme-transparent-header .elementor-location-header.scrolled,
 .ast-theme-transparent-header .elementor-section.elementor-location-header.scrolled {
   background-color: #ffffff !important;
-  box-shadow: 0 2px 20px rgba(0, 0, 0, 0.08) !important;
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1) !important;
 }
 
 .ast-theme-transparent-header .site-header.scrolled .main-header-bar,
