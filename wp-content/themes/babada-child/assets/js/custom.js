@@ -44,6 +44,7 @@
     console.log('[babada-header] init, found header:', header.id || header.className);
 
     document.body.classList.add('has-transparent-header');
+    document.body.classList.add('babada-header-js-loaded');
 
     window.addEventListener('scroll', handleScroll, { passive: true });
     handleScroll();
