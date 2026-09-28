@@ -1,0 +1,112 @@
+:root {
+  --babada-primary: #1d3557;
+  --babada-secondary: #457b9d;
+  --babada-accent: #e76f51;
+
+  --babada-dark: #17202a;
+  --babada-text: #374151;
+  --babada-muted: #6b7280;
+
+  --babada-bg: #ffffff;
+  --babada-bg-soft: #f7f8fa;
+
+  --babada-radius-sm: 8px;
+  --babada-radius-md: 16px;
+  --babada-radius-lg: 24px;
+
+  --babada-container: 1200px;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  color: var(--babada-text);
+  background: var(--babada-bg);
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  color: var(--babada-dark);
+  line-height: 1.2;
+}
+
+a {
+  transition: opacity 0.2s ease, color 0.2s ease;
+}
+
+img {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Floating Header */
+.site-header,
+#masthead,
+.ast-header,
+.elementor-location-header,
+.elementor-section.elementor-location-header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+  transition: background-color 0.3s ease, box-shadow 0.3s ease, padding 0.3s ease;
+  background-color: transparent;
+}
+
+.site-header.scrolled,
+#masthead.scrolled,
+.ast-header.scrolled,
+.elementor-location-header.scrolled,
+.elementor-section.elementor-location-header.scrolled {
+  background-color: #ffffff;
+  box-shadow: 0 2px 20px rgba(0, 0, 0, 0.08);
+}
+
+.site-header:not(.scrolled) .site-branding,
+#masthead:not(.scrolled) .site-branding,
+.ast-header:not(.scrolled) .site-branding,
+.elementor-location-header:not(.scrolled) .elementor-widget-site-logo,
+.elementor-section.elementor-location-header:not(.scrolled) .elementor-widget-site-logo {
+  opacity: 1;
+}
+
+.site-header:not(.scrolled) .main-navigation,
+#masthead:not(.scrolled) .main-navigation,
+.ast-header:not(.scrolled) .main-navigation,
+.elementor-location-header:not(.scrolled) .elementor-nav-menu,
+.elementor-section.elementor-location-header:not(.scrolled) .elementor-nav-menu {
+  opacity: 1;
+}
+
+body {
+  padding-top: 0;
+}
+
+body.has-transparent-header {
+  padding-top: 0;
+}
+
+.admin-bar .site-header,
+.admin-bar #masthead,
+.admin-bar .ast-header,
+.admin-bar .elementor-location-header,
+.admin-bar .elementor-section.elementor-location-header {
+  top: 32px;
+}
+
+@media screen and (max-width: 782px) {
+  .admin-bar .site-header,
+  .admin-bar #masthead,
+  .admin-bar .ast-header,
+  .admin-bar .elementor-location-header,
+  .admin-bar .elementor-section.elementor-location-header {
+    top: 46px;
+  }
+}
