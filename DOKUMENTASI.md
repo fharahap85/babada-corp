@@ -51,7 +51,15 @@ babada-corp/
 ├── wp-includes/         ← 2.729 file ter-track (library inti)
 └── wp-content/          ← 14.913 file ter-track
     ├── plugins/         ← 19 plugin (lihat §4)
-    ├── themes/astra/    ← theme utama
+    ├── themes/
+    │   ├── astra/       ← theme utama
+    │   └── babada-child/  ← child theme (custom CSS/JS)
+    │       ├── assets/
+    │       │   ├── css/custom.css   ← floating header styles
+    │       │   └── js/custom.js     ← scroll handler header
+    │       ├── functions.php        ← enqueue assets
+    │       ├── style.css            ← theme header
+    │       └── index.php
     ├── advanced-cache.php   ← dibuat WP-Optimize (page cache)
     ├── maintenance.php      ← dibuat otomatis saat mode maintenance
     ├── uploads/         ← TIDAK di-track (konten media)
@@ -194,6 +202,13 @@ Dibuat Yoast SEO v28.2 untuk dikonsumsi LLM. Isinya daftar URL resmi:
 - Update inti WordPress/plugin sebaiknya lewat dashboard WP, lalu commit ulang hasilnya ke repo agar tetap sinkron.
 - **Cara sinkron ke versi server bila akses SSH tertutup:** tarik paket resmi upstream dengan versi yang sama persis dengan server (wordpress.org / downloads.wordpress.org), lalu `rsync -a --delete` ke folder masing-masing — sudah dipakai 2026-09-25 dan hasilnya identik (`diff -rq` bersih). Jangan menimpa file root non-WP (`.htaccess`, `.user.ini`, `.cpanel.yml`, `*.md`, `robots.txt`, `llms.txt`, `wordfence-waf.php`).
 - File generatif (`advanced-cache.php`, `maintenance.php`) ditulis ulang oleh plugin — perubahan manual bisa hilang.
+
+### Custom Child Theme (`babada-child`)
+- **Floating transparent header**: header mengambang di atas konten, transparan saat load, jadi putih + shadow saat scroll > 50px.
+- File: `assets/css/custom.css` (styles), `assets/js/custom.js` (scroll handler).
+- Bekerja dengan Astra Transparent Header (`ast-theme-transparent-header` class di body).
+- Threshold scroll: 50px. Transisi: 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94).
+- Selector header: `#masthead` / `.site-header` (Astra), `.elementor-location-header` (Elementor).
 
 ---
 
