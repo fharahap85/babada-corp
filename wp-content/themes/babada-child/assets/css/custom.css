@@ -138,21 +138,4 @@ img {
   }
 }
 
-.babada-header-js-loaded #masthead::before {
-  content: 'JS LOADED';
-  position: fixed;
-  bottom: 10px;
-  right: 10px;
-  background: #4caf50;
-  color: white;
-  padding: 4px 8px;
-  border-radius: 4px;
-  font-size: 11px;
-  z-index: 9999;
-  font-family: monospace;
-}
 
-.babada-header-js-loaded #masthead.scrolled::before {
-  background: #2196f3;
-  content: 'SCROLLED';
-}
