@@ -26,16 +26,22 @@
     const scrollY = window.scrollY || document.documentElement.scrollTop;
     const threshold = 50;
 
+    console.log('[babada-header] scrollY:', scrollY, 'threshold:', threshold, 'header:', header.id || header.className);
+
     if (scrollY > threshold) {
       header.classList.add('scrolled');
+      console.log('[babada-header] added .scrolled');
     } else {
       header.classList.remove('scrolled');
+      console.log('[babada-header] removed .scrolled');
     }
   }
 
   function init() {
     const header = getHeader();
     if (!header) return;
+
+    console.log('[babada-header] init, found header:', header.id || header.className);
 
     document.body.classList.add('has-transparent-header');
 
