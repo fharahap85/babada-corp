@@ -1,0 +1,139 @@
+:root {
+  --babada-primary: #1d3557;
+  --babada-secondary: #457b9d;
+  --babada-accent: #e76f51;
+
+  --babada-dark: #17202a;
+  --babada-text: #374151;
+  --babada-muted: #6b7280;
+
+  --babada-bg: #ffffff;
+  --babada-bg-soft: #f7f8fa;
+
+  --babada-radius-sm: 8px;
+  --babada-radius-md: 16px;
+  --babada-radius-lg: 24px;
+
+  --babada-container: 1200px;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  color: var(--babada-text);
+  background: var(--babada-bg);
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  color: var(--babada-dark);
+  line-height: 1.2;
+}
+
+a {
+  transition: opacity 0.2s ease, color 0.2s ease;
+}
+
+img {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Floating Header - works with Astra transparent header */
+.ast-theme-transparent-header .site-header,
+.ast-theme-transparent-header #masthead,
+.ast-theme-transparent-header .ast-header,
+.ast-theme-transparent-header .elementor-location-header,
+.ast-theme-transparent-header .elementor-section.elementor-location-header {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  z-index: 1000 !important;
+  transition: background-color 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94), box-shadow 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94) !important;
+  background-color: transparent !important;
+}
+
+.ast-theme-transparent-header .site-header .main-header-bar,
+.ast-theme-transparent-header .site-header .ast-primary-header-bar,
+.ast-theme-transparent-header .site-header .main-header-bar-wrap,
+.ast-theme-transparent-header #masthead .main-header-bar,
+.ast-theme-transparent-header #masthead .ast-primary-header-bar,
+.ast-theme-transparent-header #masthead .main-header-bar-wrap,
+.ast-theme-transparent-header .ast-header .main-header-bar,
+.ast-theme-transparent-header .ast-header .ast-primary-header-bar,
+.ast-theme-transparent-header .ast-header .main-header-bar-wrap {
+  background-color: transparent !important;
+  border-bottom: none !important;
+  transition: background-color 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94), border-color 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94) !important;
+}
+
+.ast-theme-transparent-header .site-header.scrolled,
+.ast-theme-transparent-header #masthead.scrolled,
+.ast-theme-transparent-header .ast-header.scrolled,
+.ast-theme-transparent-header .elementor-location-header.scrolled,
+.ast-theme-transparent-header .elementor-section.elementor-location-header.scrolled {
+  background-color: #ffffff !important;
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1) !important;
+}
+
+.ast-theme-transparent-header .site-header.scrolled .main-header-bar,
+.ast-theme-transparent-header .site-header.scrolled .ast-primary-header-bar,
+.ast-theme-transparent-header .site-header.scrolled .main-header-bar-wrap,
+.ast-theme-transparent-header #masthead.scrolled .main-header-bar,
+.ast-theme-transparent-header #masthead.scrolled .ast-primary-header-bar,
+.ast-theme-transparent-header #masthead.scrolled .main-header-bar-wrap,
+.ast-theme-transparent-header .ast-header.scrolled .main-header-bar,
+.ast-theme-transparent-header .ast-header.scrolled .ast-primary-header-bar,
+.ast-theme-transparent-header .ast-header.scrolled .main-header-bar-wrap {
+  background-color: #ffffff !important;
+  border-bottom: 1px solid var(--ast-border-color) !important;
+}
+
+.ast-theme-transparent-header .site-header:not(.scrolled) .site-branding,
+.ast-theme-transparent-header #masthead:not(.scrolled) .site-branding,
+.ast-theme-transparent-header .ast-header:not(.scrolled) .site-branding,
+.ast-theme-transparent-header .elementor-location-header:not(.scrolled) .elementor-widget-site-logo,
+.ast-theme-transparent-header .elementor-section.elementor-location-header:not(.scrolled) .elementor-widget-site-logo {
+  opacity: 1;
+}
+
+.ast-theme-transparent-header .site-header:not(.scrolled) .main-navigation,
+.ast-theme-transparent-header #masthead:not(.scrolled) .main-navigation,
+.ast-theme-transparent-header .ast-header:not(.scrolled) .main-navigation,
+.ast-theme-transparent-header .elementor-location-header:not(.scrolled) .elementor-nav-menu,
+.ast-theme-transparent-header .elementor-section.elementor-location-header:not(.scrolled) .elementor-nav-menu {
+  opacity: 1;
+}
+
+.ast-theme-transparent-header body {
+  padding-top: 0;
+}
+
+.ast-theme-transparent-header body.has-transparent-header {
+  padding-top: 0;
+}
+
+.admin-bar .ast-theme-transparent-header .site-header,
+.admin-bar .ast-theme-transparent-header #masthead,
+.admin-bar .ast-theme-transparent-header .ast-header,
+.admin-bar .ast-theme-transparent-header .elementor-location-header,
+.admin-bar .ast-theme-transparent-header .elementor-section.elementor-location-header {
+  top: 32px !important;
+}
+
+@media screen and (max-width: 782px) {
+  .admin-bar .ast-theme-transparent-header .site-header,
+  .admin-bar .ast-theme-transparent-header #masthead,
+  .admin-bar .ast-theme-transparent-header .ast-header,
+  .admin-bar .ast-theme-transparent-header .elementor-location-header,
+  .admin-bar .ast-theme-transparent-header .elementor-section.elementor-location-header {
+    top: 46px !important;
+  }
+}
